@@ -39,7 +39,7 @@ from reportlab.platypus import (
 PERSONA = {
     "nombre": "Enrique Brun Urrutia",
     "titulo": "Ingeniero Civil Químico",
-    "especialidad": "Ingeniería de Procesos | Analítica de Datos",
+    "especialidad": "Ingeniería de Procesos | Analítica y Automatización",
     "telefono": "+56 9 6359 6523",
     "correo": "enrique.brun@usm.cl",
     "ciudad": "Santiago de Chile",
@@ -47,18 +47,12 @@ PERSONA = {
 }
 
 PERFIL_BASE = (
-    "Ingeniero Civil Químico con experiencia en Ingeniería de Procesos, mejora "
-    "continua y análisis de información operacional en minería, energía, "
-    "manufactura y abastecimiento. Participación en proyectos y experiencias "
-    "profesionales en ENAEX, CCU, Minera Los Pelambres, SQM, Antofagasta Minerals "
-    "y ENAP, combinando trabajo en terreno y entornos corporativos para comprender "
-    "procesos, identificar brechas y causas raíz, y convertir datos en oportunidades "
-    "de optimización y apoyo a la toma de decisiones.\n\n"
-    "Capacidad para desarrollar y dar seguimiento a iniciativas de mejora junto "
-    "con equipos multidisciplinarios, manteniendo foco en seguridad, eficiencia "
-    "operacional y resultados sostenibles. Perfil analítico, proactivo y adaptable, "
-    "con aprendizaje continuo y motivación por contribuir a la transformación "
-    "tecnológica y competitividad de la industria nacional."
+    "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
+    "enfocado en la optimización de procesos industriales mediante analítica de "
+    "datos, automatización y machine learning. Experiencia en minería, energía, "
+    "manufactura y abastecimiento, combinando trabajo en planta y entornos "
+    "corporativos. Desarrollo de modelos predictivos, indicadores y soluciones "
+    "de análisis para apoyar la eficiencia operacional y la toma de decisiones."
 )
 
 EXPERIENCIAS = [
@@ -68,8 +62,8 @@ EXPERIENCIAS = [
         "lugar": "Las Condes, Santiago de Chile",
         "fechas": "04/2026 - 08/2026 (5 meses)",
         "logros": [
-            "Integré información de SAP ERP, SAP Ariba y fuentes externas para analizar compras, contratos y proveedores, con foco en trazabilidad y continuidad operacional.",
-            "Desarrollé automatizaciones y tableros de indicadores para apoyar el control de gestión y reducir tareas manuales en abastecimiento.",
+            "Integré información de SAP ERP, SAP Ariba y fuentes externas para analizar compras, contratos y proveedores con criterios de trazabilidad.",
+            "Automaticé reportes y desarrollé tableros de indicadores para el seguimiento de proveedores y el control de gestión de abastecimiento.",
         ],
     },
     {
@@ -78,8 +72,8 @@ EXPERIENCIAS = [
         "lugar": "Renca, Santiago de Chile",
         "fechas": "03/2026 - 08/2026 (6 meses)",
         "logros": [
-            "Analicé variables de elaboración y envasado y desarrollé indicadores para monitorear el desempeño de la planta.",
-            "Apliqué análisis de causa raíz y automatización de reportes para identificar pérdidas y apoyar iniciativas de mejora continua.",
+            "Desarrollé indicadores y tableros de desempeño para visualizar brechas en los procesos de elaboración y envasado.",
+            "Analicé variables operacionales y causas de pérdidas para apoyar iniciativas de mejora continua de la planta.",
         ],
     },
     {
@@ -88,8 +82,8 @@ EXPERIENCIAS = [
         "lugar": "Salamanca, Chile",
         "fechas": "01/2026 - 03/2026 (3 meses)",
         "logros": [
-            "Analicé datos históricos del DCS para estudiar la estabilidad operacional y eficiencia energética del circuito de molienda SAG.",
-            "Integré observaciones de equipos y condiciones de operación en terreno, en turno 4x3, con análisis de datos para identificar desviaciones y oportunidades de mejora.",
+            "Analicé datos históricos del DCS para evaluar la estabilidad operacional y el consumo energético del circuito de molienda SAG.",
+            "Integré observaciones de equipos y condiciones de operación en terreno, en turno 4x3, para analizar desviaciones y oportunidades de mejora.",
         ],
     },
     {
@@ -98,8 +92,8 @@ EXPERIENCIAS = [
         "lugar": "Modalidad online",
         "fechas": "09/2025 - 12/2025 (4 meses)",
         "logros": [
-            "Estandaricé documentación de procesos, operaciones y otras áreas técnicas para preservar conocimiento crítico de proyectos internacionales de litio.",
-            "Estructuré información con criterios de trazabilidad y consulta para apoyar su transferencia a equipos de proyectos en Australia y China.",
+            "Estandaricé documentación técnica de procesos y operaciones para preservar conocimiento de proyectos internacionales de litio.",
+            "Organicé antecedentes con criterios de trazabilidad y consulta para apoyar su transferencia a equipos en Australia y China.",
         ],
     },
     {
@@ -109,7 +103,7 @@ EXPERIENCIAS = [
         "fechas": "04/2025 - 11/2025 (8 meses)",
         "logros": [
             "Construí y evalué modelos predictivos de capacidad de procesamiento y consumo específico de energía del circuito SAG de Minera Los Pelambres.",
-            "Identifiqué variables críticas y escenarios con potencial de mejora para apoyar decisiones de optimización operacional.",
+            "Identifiqué variables críticas y escenarios con potencial de mejora, generando antecedentes para decisiones de optimización operacional.",
         ],
     },
     {
@@ -118,8 +112,8 @@ EXPERIENCIAS = [
         "lugar": "Refinería Aconcagua · Concón, Chile",
         "fechas": "01/2025 - 03/2025 (3 meses)",
         "logros": [
-            "Analicé procesos de refinación mediante interpretación de PFD y P&ID, visitas a planta y revisión de equipos y condiciones operacionales.",
-            "Extraje y analicé datos de AVEVA PI para monitorear tendencias e indicadores e identificar oportunidades de mejora del desempeño operacional.",
+            "Analicé datos históricos de AVEVA PI y condiciones de refinación mediante interpretación de PFD y P&ID y visitas a planta.",
+            "Elaboré análisis estadísticos y reportes de desempeño para monitorear tendencias, indicadores y oportunidades de mejora operacional.",
         ],
     },
 ]
@@ -130,22 +124,17 @@ EDUCACION = (
 )
 
 COMPETENCIAS = [
-    ("Analítica de datos y Machine Learning", "Python (pandas, NumPy, scikit-learn), SQL, R, análisis estadístico, regresión, modelos predictivos y procesamiento de grandes volúmenes de datos."),
-    ("Business Intelligence y automatización", "Power BI (Power Query, DAX, Power BI Service), Excel avanzado, Minitab, Power Automate y Power Apps."),
-    ("Cloud e ingeniería de datos", "Microsoft Azure, Microsoft Fabric, Azure Databricks, Azure Data Factory, Azure Data Lake, Azure SQL, SQL Server, PySpark, ETL/ELT y APIs REST."),
-    ("Mejora continua y gestión de procesos", "Lean, Six Sigma, BPMN, análisis de causa raíz, levantamiento y optimización de procesos."),
-    ("Sistemas de información industrial", "AVEVA PI System, PI Data Archive, PI Vision y PI DataLink."),
-    ("Modelación y simulación de procesos", "Aspen Plus, Aspen HYSYS, JKSimMet, Integrated Extraction Simulator (IES), AutoCAD e interpretación de PFD y P&ID."),
-    ("Sistemas empresariales y abastecimiento", "SAP ERP y SAP Ariba; conocimientos de procesos SAP MM y del entorno SAP S/4HANA."),
-    ("Desarrollo y control de versiones", "Git, GitHub y automatización de reportes y flujos de trabajo."),
-    ("Idiomas", "Español nativo. Inglés C1 Advanced, certificado EF SET (07/2025); comprensión avanzada de documentación técnica y comunicación en contextos profesionales."),
+    ("Analítica y optimización", "Python (pandas, scikit-learn), SQL, análisis estadístico y modelos predictivos."),
+    ("BI y automatización", "Power BI (Power Query, DAX), Excel avanzado y Power Automate."),
+    ("Plataformas de datos", "Microsoft Azure y Microsoft Fabric; integración y procesamiento de datos."),
+    ("Ingeniería y operación", "Aspen Plus, Aspen HYSYS, AVEVA PI System, JKSimMet e IES; interpretación de PFD y P&ID."),
+    ("Gestión y mejora continua", "SAP ERP, SAP Ariba, Lean, Six Sigma y análisis de causa raíz."),
+    ("Idiomas", "Español nativo. Inglés C1 Advanced, certificado EF SET (07/2025)."),
 ]
 
 HABILIDADES = (
-    "Pensamiento analítico y resolución de problemas | Orientación a resultados | "
-    "Autonomía y proactividad | Trabajo colaborativo con equipos multidisciplinarios | "
-    "Comunicación de resultados técnicos | Rigurosidad y calidad de la información | "
-    "Adaptabilidad y aprendizaje continuo."
+    "Análisis y resolución de problemas | Comunicación de resultados técnicos | "
+    "Trabajo en equipos multidisciplinarios | Rigurosidad en la información."
 )
 
 CERTIFICACIONES = [
@@ -176,7 +165,7 @@ LETTER_FILENAME = "CARTA_PRESENTACION_ENRIQUE_BRUN.pdf"
 TIMEZONE = ZoneInfo("America/Santiago")
 DEFAULT_JOB = "Ingeniero de Procesos"
 DEFAULT_COMPANY = "Empresa objetivo"
-DESIGN_VERSION = "industrial-05"
+DESIGN_VERSION = "industrial-final-06"
 # El marco de SimpleDocTemplate añade 6 pt de relleno a cada lado.
 # Descontarlos mantiene encabezado, fechas y texto perfectamente alineados.
 DOCUMENT_WIDTH = A4[0] - 28 * mm - 12
@@ -260,7 +249,7 @@ def blocks(value: str) -> list[str]:
 def pdf_styles() -> dict:
     register_fonts()
     body = ParagraphStyle(
-        "body", fontName="CVSans", fontSize=9.5, leading=12,
+        "body", fontName="CVSans", fontSize=9.7, leading=12.5,
         textColor=colors.black, spaceAfter=4, splitLongWords=True,
         alignment=TA_JUSTIFY, justifyLastLine=0, justifyBreaks=0,
     )
@@ -275,8 +264,8 @@ def pdf_styles() -> dict:
         "role": ParagraphStyle("role", parent=body, fontSize=9, leading=11, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
         "meta": ParagraphStyle("meta", parent=body, fontSize=8.2, leading=10, spaceAfter=0, keepWithNext=True, alignment=TA_LEFT),
         "meta_right": ParagraphStyle("meta_right", parent=body, fontSize=8.2, leading=10, spaceAfter=0, alignment=TA_RIGHT),
-        "bullet": ParagraphStyle("bullet", parent=body, fontSize=9.5, leading=12, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=3, alignment=TA_LEFT),
-        "small": ParagraphStyle("small", parent=body, fontSize=8.7, leading=10.6, spaceAfter=2, alignment=TA_LEFT),
+        "bullet": ParagraphStyle("bullet", parent=body, fontSize=9.7, leading=12.5, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=3, alignment=TA_LEFT),
+        "small": ParagraphStyle("small", parent=body, fontSize=9.1, leading=11.8, spaceAfter=3, alignment=TA_LEFT),
         "date": ParagraphStyle("date", parent=body, alignment=2, spaceAfter=22),
         "letter": ParagraphStyle("letter", parent=body, fontSize=10.5, leading=16, spaceAfter=11),
     }
@@ -540,8 +529,8 @@ def main() -> None:
     st.session_state.setdefault("target_job", DEFAULT_JOB)
     st.session_state.setdefault("target_company", DEFAULT_COMPANY)
     st.session_state.setdefault("professional_profile", PERFIL_BASE)
-    # Al actualizar desde la edición compacta, recupera el perfil completo una
-    # sola vez. Conserva un borrador anterior por si necesitas copiarlo luego.
+    # Al actualizar, carga el perfil base de esta edición una sola vez.
+    # Conserva el texto anterior como borrador de sesión.
     if st.session_state.get("_industrial_profile_initialized") != DESIGN_VERSION:
         st.session_state["_previous_profile_draft"] = st.session_state.get("professional_profile", "")
         st.session_state["professional_profile"] = PERFIL_BASE
@@ -568,7 +557,7 @@ def main() -> None:
             profile = st.text_area("Texto del perfil", key="professional_profile", height=390,
                                    max_chars=3500, help="Separa los párrafos con una línea en blanco.")
             st.caption(f"{len(clean(profile).split())} palabras · Edita solo lo necesario para la postulación.")
-            st.button("Restaurar perfil original", key="reset_profile", on_click=reset_profile)
+            st.button("Restaurar perfil base", key="reset_profile", on_click=reset_profile)
             st.caption("Diseño completo con dos aportes por experiencia, ubicaciones detalladas y todas tus secciones de formación y competencias.")
             st.caption("Si escribes un perfil más extenso, el documento puede sumar páginas para conservar todo el contenido.")
         with preview:
