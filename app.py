@@ -33,9 +33,9 @@ from reportlab.platypus import (
 )
 
 
-# DATOS DE REFERENCIA: transcritos del CV proporcionado. Las versiones breves
-# se definen en CONCISE_EXPERIENCES y VERSIONS. Streamlit permite seleccionar
-# el enfoque y editar su perfil; los demás antecedentes se mantienen fijos.
+# DATOS FIJOS: transcritos del CV proporcionado. El único contenido del CV que
+# se modifica desde Streamlit es PERFIL_BASE. Para actualizar experiencia,
+# formación o contacto en el futuro, edita las constantes de este archivo.
 PERSONA = {
     "nombre": "Enrique Brun Urrutia",
     "titulo": "Ingeniero Civil Químico",
@@ -182,110 +182,10 @@ LETTER_FILENAME = "CARTA_PRESENTACION_ENRIQUE_BRUN.pdf"
 TIMEZONE = ZoneInfo("America/Santiago")
 DEFAULT_JOB = "Ingeniero de Procesos"
 DEFAULT_COMPANY = "Empresa objetivo"
-DESIGN_VERSION = "compact-04"
+DESIGN_VERSION = "minimal-03"
 # El marco de SimpleDocTemplate añade 6 pt de relleno a cada lado.
 # Descontarlos mantiene encabezado, fechas y texto perfectamente alineados.
 DOCUMENT_WIDTH = A4[0] - 28 * mm - 12
-
-DEFAULT_FOCUS = "Procesos"
-CONCISE_EXPERIENCES = [
-    ("ENAEX · Gerencia de Abastecimiento", "Práctica profesional · Analítica y automatización", [
-        "Integré datos de SAP ERP, SAP Ariba y fuentes externas para analizar compras, contratos y proveedores.",
-        "Automaticé reportes y tableros para apoyar el control de gestión del área de abastecimiento.",
-    ]),
-    ("CCU · Planta Modelo Renca", "Práctica industrial · Operaciones", [
-        "Desarrollé indicadores y tableros para monitorear el desempeño de elaboración y envasado de bebidas.",
-        "Apliqué análisis de causa raíz para identificar pérdidas y apoyar iniciativas de mejora continua.",
-    ]),
-    ("Minera Los Pelambres · Ingeniería de Procesos", "Práctica profesional · Procesos", [
-        "Analicé datos históricos del DCS para estudiar la estabilidad y eficiencia energética de la molienda SAG.",
-        "Integré observaciones en terreno, en turno 4x3, con análisis de variables para identificar desviaciones.",
-    ]),
-    ("SQM · International Lithium", "Práctica · Gestión del conocimiento", [
-        "Estandaricé documentación técnica de operaciones, procesos y abastecimiento con criterios de trazabilidad.",
-        "Organicé información para facilitar su consulta por equipos de proyectos de litio en Australia y China.",
-    ]),
-    ("Antofagasta Minerals · División de Procesos", "Proyecto de título · Machine Learning", [
-        "Construí y evalué modelos predictivos de capacidad de procesamiento y consumo energético en molienda SAG.",
-        "Identifiqué variables críticas y escenarios con potencial de mejora para apoyar decisiones de procesos.",
-    ]),
-    ("ENAP · Refinería Aconcagua", "Práctica industrial · Procesos", [
-        "Analicé procesos de refinación mediante PFD, P&ID, visitas a planta e información de AVEVA PI.",
-        "Desarrollé análisis estadísticos y reportes para monitorear variables y detectar oportunidades de mejora.",
-    ]),
-]
-
-VERSIONS = {
-    "Procesos": {
-        "job": "Ingeniero de Procesos",
-        "tagline": "Ingeniería de Procesos | Mejora Continua",
-        "profile": (
-            "Ingeniero Civil Químico de la UTFSM con experiencia en procesos industriales, "
-            "análisis operacional y mejora continua en minería, energía y manufactura. "
-            "He trabajado con molienda SAG, datos de planta y modelos predictivos para "
-            "identificar desviaciones y oportunidades de optimización. Busco aportar al "
-            "desempeño y la eficiencia de los procesos."
-        ),
-        "relevant": [1, 2, 4, 5],
-        "skills": [
-            ("Procesos", "Aspen Plus, Aspen HYSYS, JKSimMet."),
-            ("Datos", "Python, SQL, Power BI."),
-            ("Operación", "AVEVA PI, Excel avanzado, análisis de causa raíz."),
-        ],
-        "certifications": "JKSimMet · The University of Queensland, 2025. IES · Orica, 2025.",
-    },
-    "Datos / BI": {
-        "job": "Analista de Datos / BI",
-        "tagline": "Analítica de Datos | Business Intelligence",
-        "profile": (
-            "Ingeniero Civil Químico de la UTFSM con experiencia en análisis de datos "
-            "industriales, automatización de reportes y desarrollo de indicadores. He "
-            "integrado información de procesos y sistemas empresariales para elaborar "
-            "tableros y modelos predictivos. Busco transformar datos operacionales en "
-            "información útil para el control de gestión y la toma de decisiones."
-        ),
-        "relevant": [0, 1, 2, 4],
-        "skills": [
-            ("Analítica", "Python (pandas, scikit-learn), SQL."),
-            ("Visualización", "Power BI (DAX, Power Query), Excel avanzado."),
-            ("Automatización y datos", "Power Automate, Azure Data Factory, PySpark."),
-        ],
-        "certifications": "Power BI y Excel · SERGROUP, 2025.",
-    },
-    "Abastecimiento": {
-        "job": "Analista de Abastecimiento",
-        "tagline": "Abastecimiento | Analítica y Automatización",
-        "profile": (
-            "Ingeniero Civil Químico de la UTFSM con experiencia en análisis de compras, "
-            "contratos y proveedores, integración de información empresarial y automatización "
-            "de reportes. He trabajado con SAP ERP, SAP Ariba y herramientas de análisis "
-            "para apoyar la trazabilidad y el control de gestión. Busco contribuir a la "
-            "eficiencia y continuidad del abastecimiento."
-        ),
-        "relevant": [0, 3],
-        "skills": [
-            ("Abastecimiento", "SAP ERP, SAP Ariba."),
-            ("Control de gestión", "Power BI, Excel avanzado."),
-            ("Automatización", "Python, SQL, Power Automate."),
-        ],
-        "certifications": "Power BI y Excel · SERGROUP, 2025.",
-    },
-}
-
-LANGUAGES_SHORT = "Español nativo · Inglés C1 Advanced, certificado EF SET (2025)."
-TEACHING_SHORT = "Ayudante y coordinador UTFSM (2021 - 2025); docente CPECH; vicepresidente de Marketing en AIESEC Chile."
-
-
-def compact_experiences(focus: str) -> tuple[list[dict], list[dict]]:
-    relevant_indices = VERSIONS[focus]["relevant"]
-    relevant, other = [], []
-    for index, (company, role, achievements) in enumerate(CONCISE_EXPERIENCES):
-        item = {
-            "company": company, "role": role, "achievements": achievements,
-            "dates": EXPERIENCIAS[index]["fechas"].split(" (")[0],
-        }
-        (relevant if index in relevant_indices else other).append(item)
-    return relevant, other
 
 CSS = """
 <style>
@@ -313,12 +213,8 @@ h1, h2, h3 { letter-spacing: -.03em; }
 .cv-paper .meta { display: flex; justify-content: space-between; gap: 10px;
     font-size: 10px; margin: 3px 0 7px; }
 .cv-paper ul { margin: 4px 0 12px; padding-left: 16px; }
-.cv-paper li { margin-bottom: 4px; text-align: left; }
+.cv-paper li { margin-bottom: 4px; text-align: justify; }
 .cv-paper .small p { font-size: 11px; margin-bottom: 6px; }
-.cv-paper .compact-entry { margin: 12px 0 3px; }
-.cv-paper .compact-role { display: flex; justify-content: space-between; gap: 12px;
-    font-size: 10px; margin-bottom: 5px; }
-.cv-paper .other p { text-align: left; font-size: 11px; }
 @media (max-width: 650px) {
  .cv-paper .masthead { display: block; }
  .cv-paper .contact { text-align: left; margin-top: 12px; }
@@ -365,7 +261,7 @@ def blocks(value: str) -> list[str]:
 def pdf_styles() -> dict:
     register_fonts()
     body = ParagraphStyle(
-        "body", fontName="CVSans", fontSize=9.8, leading=13,
+        "body", fontName="CVSans", fontSize=9.2, leading=11.6,
         textColor=colors.black, spaceAfter=4, splitLongWords=True,
         alignment=TA_JUSTIFY, justifyLastLine=0, justifyBreaks=0,
     )
@@ -380,8 +276,8 @@ def pdf_styles() -> dict:
         "role": ParagraphStyle("role", parent=body, fontSize=9, leading=11, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
         "meta": ParagraphStyle("meta", parent=body, fontSize=8.2, leading=10, spaceAfter=0, keepWithNext=True, alignment=TA_LEFT),
         "meta_right": ParagraphStyle("meta_right", parent=body, fontSize=8.2, leading=10, spaceAfter=0, alignment=TA_RIGHT),
-        "bullet": ParagraphStyle("bullet", parent=body, fontSize=9.5, leading=12.5, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=2, alignment=TA_LEFT),
-        "small": ParagraphStyle("small", parent=body, fontSize=9.1, leading=12, spaceAfter=2, alignment=TA_LEFT),
+        "bullet": ParagraphStyle("bullet", parent=body, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=2),
+        "small": ParagraphStyle("small", parent=body, fontSize=8.6, leading=10.4, spaceAfter=1.4),
         "date": ParagraphStyle("date", parent=body, alignment=2, spaceAfter=22),
         "letter": ParagraphStyle("letter", parent=body, fontSize=10.5, leading=16, spaceAfter=11),
     }
@@ -426,11 +322,11 @@ def table_style() -> TableStyle:
     ])
 
 
-def header(story: list, styles: dict, focus: str = DEFAULT_FOCUS) -> None:
+def header(story: list, styles: dict) -> None:
     identity = [
         Paragraph(escape(PERSONA["nombre"]), styles["name"]),
         Paragraph(escape(PERSONA["titulo"].upper() + " · UTFSM"), styles["title"]),
-        Paragraph(escape(VERSIONS[focus]["tagline"]), styles["specialty"]),
+        Paragraph(escape(PERSONA["especialidad"]), styles["specialty"]),
     ]
     phone_url = "tel:" + re.sub(r"[^+0-9]", "", PERSONA["telefono"])
     linkedin_url = "https://" + PERSONA["linkedin"]
@@ -473,47 +369,60 @@ def build_document(story: list, title: str) -> bytes:
     return output.getvalue()
 
 
-def generate_cv(profile: str, focus: str = DEFAULT_FOCUS) -> bytes:
+def generate_cv(profile: str) -> bytes:
     profile = validate_text(profile)
     if not profile:
         raise ValueError("Escribe tu perfil profesional antes de generar el CV.")
-    if focus not in VERSIONS:
-        raise ValueError("Selecciona un enfoque válido.")
     styles = pdf_styles()
-    version = VERSIONS[focus]
-    relevant, other = compact_experiences(focus)
     story = []
-    header(story, styles, focus)
-    story.append(SectionHeading("Perfil profesional"))
+    header(story, styles)
+
+    def section(title: str) -> None:
+        story.append(SectionHeading(title))
+
+    section("Perfil profesional")
     for paragraph in blocks(profile):
         story.append(Paragraph(escape(paragraph).replace("\n", "<br/>"), styles["body"]))
-    story.append(SectionHeading("Experiencia relevante"))
-    for item in relevant:
+    section("Experiencia profesional")
+    for index, item in enumerate(EXPERIENCIAS):
+        # Conserva la distribución del documento de origen. Un perfil extenso
+        # puede sumar páginas; ReportLab mantiene todo el contenido sin recortar.
+        if index == 4:
+            story.append(PageBreak())
+            section("Experiencia profesional · Continuación")
         metadata = Table([[
-            Paragraph(escape(item["role"]), styles["meta"]),
-            Paragraph(escape(item["dates"]), styles["meta_right"]),
-        ]], colWidths=[DOCUMENT_WIDTH * .68, DOCUMENT_WIDTH * .32], style=table_style())
+            Paragraph(escape(item["lugar"]), styles["meta"]),
+            Paragraph(escape(item["fechas"]), styles["meta_right"]),
+        ]], colWidths=[DOCUMENT_WIDTH * .58, DOCUMENT_WIDTH * .42], style=table_style())
         metadata.keepWithNext = True
         metadata.spaceAfter = 3
-        story.extend([Paragraph(escape(item["company"]), styles["company"]), metadata])
-        for achievement in item["achievements"]:
+        story.extend([
+            Paragraph(escape(item["empresa"]), styles["company"]),
+            Paragraph(escape(item["cargo"]), styles["role"]),
+            metadata,
+        ])
+        for achievement in item["logros"]:
             story.append(Paragraph(escape(achievement), styles["bullet"], bulletText="-"))
         story.append(Spacer(1, 3))
-    if other:
-        story.append(SectionHeading("Experiencia complementaria"))
-        for item in other:
-            label = f'<b>{escape(item["company"])}</b> · {escape(item["role"])} · {escape(item["dates"])}'
-            story.append(Paragraph(label, styles["small"]))
-    story.append(SectionHeading("Formación y certificaciones"))
+
+    section("Educación")
     story.append(Paragraph(escape(EDUCACION[0]), styles["company"]))
-    story.append(Paragraph(escape(EDUCACION[1]), styles["small"]))
-    story.append(Paragraph("<b>Certificaciones:</b> " + escape(version["certifications"]), styles["small"]))
-    story.append(SectionHeading("Herramientas e idiomas"))
-    for title, description in version["skills"]:
+    story.append(Paragraph(escape(EDUCACION[1]), styles["body"]))
+    section("Competencias técnicas e idiomas")
+    for title, description in COMPETENCIAS:
         story.append(Paragraph(f"<b>{escape(title)}:</b> {escape(description)}", styles["small"]))
-    story.append(Paragraph(escape(LANGUAGES_SHORT), styles["small"]))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph("<b>Docencia y liderazgo:</b> " + escape(TEACHING_SHORT), styles["small"]))
+    section("Habilidades profesionales")
+    story.append(Paragraph(escape(HABILIDADES), styles["small"]))
+    section("Certificaciones")
+    for certification in CERTIFICACIONES:
+        story.append(Paragraph(escape(certification), styles["small"]))
+    section("Docencia y actividades")
+    for title, description in DOCENCIA:
+        story.append(KeepTogether([
+            Paragraph(f"<b>{escape(title)}</b>", styles["small"]),
+            Paragraph(escape(description), styles["small"]),
+        ]))
+    story.append(Paragraph(f"<b>Actividades:</b> {escape(ACTIVIDADES)}", styles["small"]))
     return build_document(story, "Enrique Brun Urrutia | Ingeniero Civil Químico | UTFSM")
 
 
@@ -536,13 +445,13 @@ def letter_template(job: str, company: str) -> str:
     )
 
 
-def generate_letter(text: str, job: str, company: str, created_at: datetime, focus: str = DEFAULT_FOCUS) -> bytes:
+def generate_letter(text: str, job: str, company: str, created_at: datetime) -> bytes:
     text, job, company = map(validate_text, (text, job, company))
     if not text:
         raise ValueError("Completa la carta o desactiva su inclusión en la carpeta.")
     styles = pdf_styles()
     story = []
-    header(story, styles, focus)
+    header(story, styles)
     story.append(Spacer(1, 12))
     story.append(Paragraph(f'Santiago de Chile, {created_at:%d/%m/%Y}', styles["date"]))
     if company:
@@ -570,12 +479,12 @@ def folder_name(job: str, company: str, created_at: datetime, token: str) -> str
 
 
 def package_application(profile: str, job: str, company: str,
-                        include_letter: bool, letter_text: str, focus: str = DEFAULT_FOCUS) -> dict:
+                        include_letter: bool, letter_text: str) -> dict:
     """El ZIP entrega una carpeta real al extraerlo, sin depender del disco cloud."""
     created_at = datetime.now(TIMEZONE)
     folder = folder_name(job, company, created_at, uuid4().hex[:6])
-    cv_pdf = generate_cv(profile, focus)
-    letter_pdf = generate_letter(letter_text, job, company, created_at, focus) if include_letter else None
+    cv_pdf = generate_cv(profile)
+    letter_pdf = generate_letter(letter_text, job, company, created_at) if include_letter else None
     output = BytesIO()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(folder + "/", b"")
@@ -588,19 +497,17 @@ def package_application(profile: str, job: str, company: str,
     }
 
 
-def fingerprint(profile: str, job: str, company: str, include_letter: bool, letter_text: str, focus: str = DEFAULT_FOCUS) -> str:
-    payload = [DESIGN_VERSION, focus, profile, job, company, include_letter, letter_text if include_letter else ""]
+def fingerprint(profile: str, job: str, company: str, include_letter: bool, letter_text: str) -> str:
+    payload = [DESIGN_VERSION, profile, job, company, include_letter, letter_text if include_letter else ""]
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()
 
 
-def preview_html(profile: str, focus: str = DEFAULT_FOCUS) -> str:
+def preview_html(profile: str) -> str:
     e = html.escape
-    version = VERSIONS[focus]
-    relevant, other = compact_experiences(focus)
     result = '<article class="cv-paper" lang="es"><div class="masthead"><div class="identity">'
     result += f'<div class="name">{e(PERSONA["nombre"])}</div>'
     result += f'<div class="title">{e(PERSONA["titulo"])} · UTFSM</div>'
-    result += f'<div class="specialty">{e(version["tagline"])}</div></div>'
+    result += f'<div class="specialty">{e(PERSONA["especialidad"])}</div></div>'
     phone_url = "tel:" + re.sub(r"[^+0-9]", "", PERSONA["telefono"])
     result += f'<div class="contact">{e(PERSONA["ciudad"])}<br>'
     result += f'<a href="{phone_url}">{e(PERSONA["telefono"])}</a><br>'
@@ -609,39 +516,26 @@ def preview_html(profile: str, focus: str = DEFAULT_FOCUS) -> str:
     result += '</div></div><hr><h2>Perfil profesional</h2>'
     for paragraph in blocks(profile):
         result += "<p>" + e(paragraph).replace("\n", "<br>") + "</p>"
-    result += "<h2>Experiencia relevante</h2>"
-    for item in relevant:
-        result += f'<h3>{e(item["company"])}</h3>'
-        result += f'<div class="compact-role"><span>{e(item["role"])}</span><span>{e(item["dates"])}</span></div><ul>'
-        result += "".join(f"<li>{e(line)}</li>" for line in item["achievements"]) + "</ul>"
-    result += '<div class="small other">'
-    if other:
-        result += "<h2>Experiencia complementaria</h2>"
-        for item in other:
-            result += f'<p><strong>{e(item["company"])}</strong> · {e(item["role"])} · {e(item["dates"])}</p>'
-    result += f'<h2>Formación y certificaciones</h2><h3>{e(EDUCACION[0])}</h3><p>{e(EDUCACION[1])}</p>'
-    result += f'<p><strong>Certificaciones:</strong> {e(version["certifications"])}</p>'
-    result += '<h2>Herramientas e idiomas</h2>'
-    for title, description in version["skills"]:
+    result += "<h2>Experiencia profesional</h2>"
+    for item in EXPERIENCIAS:
+        result += f'<h3>{e(item["empresa"])}</h3><div>{e(item["cargo"])}</div>'
+        result += f'<div class="meta"><span>{e(item["lugar"])}</span><span>{e(item["fechas"])}</span></div><ul>'
+        result += "".join(f"<li>{e(line)}</li>" for line in item["logros"]) + "</ul>"
+    result += f'<h2>Educación</h2><h3>{e(EDUCACION[0])}</h3><p>{e(EDUCACION[1])}</p>'
+    result += '<h2>Competencias técnicas e idiomas</h2><div class="small">'
+    for title, description in COMPETENCIAS:
         result += f"<p><strong>{e(title)}:</strong> {e(description)}</p>"
-    result += f'<p>{e(LANGUAGES_SHORT)}</p><p><strong>Docencia y liderazgo:</strong> {e(TEACHING_SHORT)}</p>'
+    result += f"<h2>Habilidades profesionales</h2><p>{e(HABILIDADES)}</p><h2>Certificaciones</h2>"
+    result += "".join(f"<p>{e(line)}</p>" for line in CERTIFICACIONES)
+    result += "<h2>Docencia y actividades</h2>"
+    for title, description in DOCENCIA:
+        result += f"<p><strong>{e(title)}</strong><br>{e(description)}</p>"
+    result += f"<p><strong>Actividades:</strong> {e(ACTIVIDADES)}</p>"
     return result + "</div></article>"
 
 
 def reset_profile() -> None:
-    focus = st.session_state.get("cv_focus", DEFAULT_FOCUS)
-    st.session_state["professional_profile"] = VERSIONS[focus]["profile"]
-
-
-def switch_focus() -> None:
-    previous = st.session_state.get("_active_focus", DEFAULT_FOCUS)
-    drafts = st.session_state.setdefault("_profile_drafts", {})
-    drafts[previous] = st.session_state.get("professional_profile", VERSIONS[previous]["profile"])
-    focus = st.session_state["cv_focus"]
-    st.session_state["professional_profile"] = drafts.get(focus, VERSIONS[focus]["profile"])
-    if st.session_state.get("target_job", "") in {v["job"] for v in VERSIONS.values()} | {""}:
-        st.session_state["target_job"] = VERSIONS[focus]["job"]
-    st.session_state["_active_focus"] = focus
+    st.session_state["professional_profile"] = PERFIL_BASE
 
 
 def refresh_letter() -> None:
@@ -655,17 +549,10 @@ def main() -> None:
     st.html(CSS)
     st.session_state.setdefault("target_job", DEFAULT_JOB)
     st.session_state.setdefault("target_company", DEFAULT_COMPANY)
-    st.session_state.setdefault("cv_focus", DEFAULT_FOCUS)
-    st.session_state.setdefault("_active_focus", DEFAULT_FOCUS)
-    st.session_state.setdefault("professional_profile", VERSIONS[DEFAULT_FOCUS]["profile"])
-    if st.session_state["professional_profile"] == PERFIL_BASE:
-        st.session_state["professional_profile"] = VERSIONS[st.session_state["cv_focus"]]["profile"]
+    st.session_state.setdefault("professional_profile", PERFIL_BASE)
     st.session_state.setdefault("cover_letter", letter_template(st.session_state["target_job"], st.session_state["target_company"]))
     st.title("Enrique Brun · Postulaciones")
     st.caption("CV personal · Ingeniería Civil Química · Universidad Técnica Federico Santa María")
-
-    focus = st.selectbox("Enfoque de la postulación", options=list(VERSIONS), key="cv_focus", on_change=switch_focus)
-    st.caption("Cada enfoque prioriza experiencias y herramientas distintas. Tus cambios de perfil se conservan por enfoque durante la sesión.")
 
     left, right = st.columns(2)
     with left:
@@ -681,18 +568,18 @@ def main() -> None:
         editor, preview = st.columns((1, 1.12), gap="large")
         with editor:
             st.subheader("Perfil profesional")
-            st.write("Adapta este párrafo a la vacante. Las experiencias y herramientas se seleccionan según el enfoque.")
+            st.write("Adapta este texto a la vacante. Tu experiencia, formación y demás antecedentes ya están incorporados.")
             profile = st.text_area("Texto del perfil", key="professional_profile", height=390,
                                    max_chars=3500, help="Separa los párrafos con una línea en blanco.")
-            st.caption(f"{len(clean(profile).split())} palabras · Recomendado: 45 a 60 palabras.")
-            st.button("Restaurar perfil de este enfoque", key="reset_profile", on_click=reset_profile)
-            st.caption("Versión resumida: hasta dos viñetas por experiencia relevante, herramientas seleccionadas y antecedentes complementarios compactos.")
+            st.caption(f"{len(clean(profile)):,} caracteres · Recomendado: 700 a 1.200 para conservar una lectura ágil.")
+            st.button("Restaurar perfil original", key="reset_profile", on_click=reset_profile)
+            st.caption("El PDF usa una tipografía sans serif, jerarquías claras, márgenes uniformes y texto seleccionable. El perfil original está distribuido en dos páginas junto al resto de tus antecedentes.")
             st.caption("Si escribes un perfil más extenso, el documento puede sumar páginas para conservar todo el contenido.")
         with preview:
             st.subheader("Vista previa del CV")
             st.caption("La paginación definitiva se ve en el PDF descargado.")
             with st.container(height=720, border=True):
-                st.html(preview_html(profile, focus))
+                st.html(preview_html(profile))
 
     with letter_tab:
         st.subheader("Carta de presentación")
@@ -703,7 +590,7 @@ def main() -> None:
         st.caption("El botón de plantilla reemplaza el texto de la carta. Revisa y personaliza el contenido antes de confirmar.")
 
     st.divider()
-    current = fingerprint(profile, job, company, include_letter, letter_text, focus)
+    current = fingerprint(profile, job, company, include_letter, letter_text)
     package = st.session_state.get("_application_package")
     if package and package["fingerprint"] != current:
         st.session_state.pop("_application_package", None)
@@ -721,7 +608,7 @@ def main() -> None:
         else:
             try:
                 with st.spinner("Preparando tu postulación..."):
-                    package = package_application(profile, job, company, include_letter, letter_text, focus)
+                    package = package_application(profile, job, company, include_letter, letter_text)
                 package["fingerprint"] = current
                 st.session_state["_application_package"] = package
             except ValueError as exc:
