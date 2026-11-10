@@ -22,13 +22,14 @@ from zoneinfo import ZoneInfo
 
 import streamlit as st
 from reportlab.lib import colors
+from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    HRFlowable, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer,
+    Flowable, HRFlowable, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 
 
@@ -179,6 +180,12 @@ ACTIVIDADES = (
 PDF_FILENAME = "CV_ENRIQUE_BRUN_INGENIERO_CIVIL_QUIMICO_UTFSM.pdf"
 LETTER_FILENAME = "CARTA_PRESENTACION_ENRIQUE_BRUN.pdf"
 TIMEZONE = ZoneInfo("America/Santiago")
+DEFAULT_JOB = "Ingeniero de Procesos"
+DEFAULT_COMPANY = "Empresa objetivo"
+DESIGN_VERSION = "minimal-03"
+# El marco de SimpleDocTemplate añade 6 pt de relleno a cada lado.
+# Descontarlos mantiene encabezado, fechas y texto perfectamente alineados.
+DOCUMENT_WIDTH = A4[0] - 28 * mm - 12
 
 CSS = """
 <style>
@@ -186,19 +193,34 @@ CSS = """
 .block-container { max-width: 1280px; padding-top: 2rem; }
 h1, h2, h3 { letter-spacing: -.03em; }
 .cv-paper { font-family: Helvetica, Arial, sans-serif; color: #111;
-    background: #fff; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
-.cv-paper .name { font-size: 27px; line-height: 1.2; font-weight: 700; }
-.cv-paper .title { font-size: 14px; margin-top: 5px; }
-.cv-paper .contact { font-size: 10px; margin-top: 7px; line-height: 1.6; }
-.cv-paper hr { border: 0; border-top: 1px solid #111; margin: 17px 0; }
-.cv-paper h2 { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
-    margin: 21px 0 10px; color: #111; }
-.cv-paper h3 { font-size: 12px; margin: 16px 0 2px; letter-spacing: 0; }
-.cv-paper p { font-size: 12px; margin: 0 0 8px; }
-.cv-paper .meta { font-size: 10px; margin: 3px 0 6px; }
+    background: #fff; font-size: 12px; line-height: 1.55; padding: 12px 8px;
+    overflow-wrap: break-word; }
+.cv-paper .masthead { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
+.cv-paper .identity { flex: 1; }
+.cv-paper .name { font-size: 27px; line-height: 1.15; font-weight: 700; letter-spacing: -.7px; }
+.cv-paper .title { font-size: 10px; font-weight: 700; letter-spacing: .9px; margin-top: 9px; text-transform: uppercase; }
+.cv-paper .specialty { font-size: 11px; margin-top: 4px; }
+.cv-paper .contact { font-size: 10px; line-height: 1.85; text-align: right; }
+.cv-paper a { color: #111 !important; text-decoration: none; }
+.cv-paper a.linkedin { border-bottom: 1px solid #777; padding-bottom: 1px; }
+.cv-paper hr { border: 0; border-top: 1.3px solid #111; margin: 18px 0 6px; }
+.cv-paper h2 { display: flex; align-items: center; gap: 12px; font-size: 11px;
+    font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase;
+    margin: 21px 0 10px; color: #111; white-space: nowrap; }
+.cv-paper h2::after { content: ''; flex: 1; height: 1px; background: #bbb; }
+.cv-paper h3 { font-size: 12px; font-weight: 700; margin: 16px 0 3px; letter-spacing: 0; }
+.cv-paper p { font-size: 12px; margin: 0 0 8px; text-align: justify; }
+.cv-paper .meta { display: flex; justify-content: space-between; gap: 10px;
+    font-size: 10px; margin: 3px 0 7px; }
 .cv-paper ul { margin: 4px 0 12px; padding-left: 16px; }
-.cv-paper li { margin-bottom: 4px; }
+.cv-paper li { margin-bottom: 4px; text-align: justify; }
 .cv-paper .small p { font-size: 11px; margin-bottom: 6px; }
+@media (max-width: 650px) {
+ .cv-paper .masthead { display: block; }
+ .cv-paper .contact { text-align: left; margin-top: 12px; }
+ .cv-paper .name { font-size: 25px; }
+ .cv-paper h2 { white-space: normal; font-size: 10px; }
+}
 </style>
 """
 
@@ -241,33 +263,83 @@ def pdf_styles() -> dict:
     body = ParagraphStyle(
         "body", fontName="CVSans", fontSize=9.2, leading=11.6,
         textColor=colors.black, spaceAfter=4, splitLongWords=True,
+        alignment=TA_JUSTIFY, justifyLastLine=0, justifyBreaks=0,
     )
     return {
         "body": body,
-        "name": ParagraphStyle("name", parent=body, fontName="CVSansBold", fontSize=24, leading=28, spaceAfter=4),
-        "title": ParagraphStyle("title", parent=body, fontSize=11, leading=15, spaceAfter=2),
-        "contact": ParagraphStyle("contact", parent=body, fontSize=8.5, leading=11.5, spaceAfter=1),
+        "name": ParagraphStyle("name", parent=body, fontName="CVSansBold", fontSize=24, leading=27, spaceAfter=7, alignment=TA_LEFT),
+        "title": ParagraphStyle("title", parent=body, fontName="CVSansBold", fontSize=9.2, leading=12, spaceAfter=3, alignment=TA_LEFT),
+        "specialty": ParagraphStyle("specialty", parent=body, fontSize=9.2, leading=12, spaceAfter=0, alignment=TA_LEFT),
+        "contact": ParagraphStyle("contact", parent=body, fontSize=8.5, leading=12.3, spaceAfter=0, alignment=TA_RIGHT),
         "section": ParagraphStyle("section", parent=body, fontName="CVSansBold", fontSize=9.3, leading=11.5, spaceBefore=8, spaceAfter=4, keepWithNext=True),
-        "company": ParagraphStyle("company", parent=body, fontName="CVSansBold", fontSize=9.7, leading=11, spaceBefore=4, spaceAfter=1, keepWithNext=True),
-        "role": ParagraphStyle("role", parent=body, fontSize=9, leading=11, spaceAfter=1, keepWithNext=True),
-        "meta": ParagraphStyle("meta", parent=body, fontSize=8.2, leading=10, spaceAfter=3, keepWithNext=True),
+        "company": ParagraphStyle("company", parent=body, fontName="CVSansBold", fontSize=9.7, leading=11.5, spaceBefore=3, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
+        "role": ParagraphStyle("role", parent=body, fontSize=9, leading=11, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
+        "meta": ParagraphStyle("meta", parent=body, fontSize=8.2, leading=10, spaceAfter=0, keepWithNext=True, alignment=TA_LEFT),
+        "meta_right": ParagraphStyle("meta_right", parent=body, fontSize=8.2, leading=10, spaceAfter=0, alignment=TA_RIGHT),
         "bullet": ParagraphStyle("bullet", parent=body, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=2),
-        "small": ParagraphStyle("small", parent=body, fontSize=8.6, leading=10.4, spaceAfter=2),
+        "small": ParagraphStyle("small", parent=body, fontSize=8.6, leading=10.4, spaceAfter=1.4),
         "date": ParagraphStyle("date", parent=body, alignment=2, spaceAfter=22),
         "letter": ParagraphStyle("letter", parent=body, fontSize=10.5, leading=16, spaceAfter=11),
     }
 
 
+class SectionHeading(Flowable):
+    """Título destacado con una línea fina: sección legible sin recuadros."""
+
+    def __init__(self, title: str):
+        super().__init__()
+        self.title = title.upper()
+        self.height = 21
+        self.keepWithNext = True
+
+    def wrap(self, available_width, available_height):
+        self.width = available_width
+        return self.width, self.height
+
+    def draw(self):
+        self.canv.saveState()
+        self.canv.setFillColor(colors.black)
+        text = self.canv.beginText(0, 5)
+        text.setFont("CVSansBold", 9.8)
+        text.setCharSpace(.85)
+        text.textOut(self.title)
+        self.canv.drawText(text)
+        label_width = pdfmetrics.stringWidth(self.title, "CVSansBold", 9.8) + .85 * (len(self.title) - 1)
+        if label_width + 18 < self.width:
+            self.canv.setStrokeColor(colors.HexColor("#B8B8B8"))
+            self.canv.setLineWidth(.5)
+            self.canv.line(label_width + 13, 8, self.width, 8)
+        self.canv.restoreState()
+
+
+def table_style() -> TableStyle:
+    return TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ])
+
+
 def header(story: list, styles: dict) -> None:
-    story.extend([
+    identity = [
         Paragraph(escape(PERSONA["nombre"]), styles["name"]),
-        Paragraph(escape(PERSONA["titulo"] + " | " + PERSONA["especialidad"]), styles["title"]),
-        Spacer(1, 4),
-        Paragraph(escape(" | ".join(PERSONA[k] for k in ("telefono", "correo", "ciudad"))), styles["contact"]),
-        Paragraph(escape(PERSONA["linkedin"]), styles["contact"]),
-        Spacer(1, 9),
-        HRFlowable(width="100%", thickness=.55, color=colors.black),
-        Spacer(1, 5),
+        Paragraph(escape(PERSONA["titulo"].upper() + " · UTFSM"), styles["title"]),
+        Paragraph(escape(PERSONA["especialidad"]), styles["specialty"]),
+    ]
+    phone_url = "tel:" + re.sub(r"[^+0-9]", "", PERSONA["telefono"])
+    linkedin_url = "https://" + PERSONA["linkedin"]
+    contact = [
+        Paragraph(escape(PERSONA["ciudad"]), styles["contact"]),
+        Paragraph(f'<link href="{phone_url}" color="#111111">{escape(PERSONA["telefono"])}</link>', styles["contact"]),
+        Paragraph(f'<link href="mailto:{PERSONA["correo"]}" color="#111111">{escape(PERSONA["correo"])}</link>', styles["contact"]),
+        Paragraph(f'<link href="{linkedin_url}" color="#111111"><u>LinkedIn / Enrique Brun</u></link>', styles["contact"]),
+    ]
+    masthead = Table([[identity, contact]], colWidths=[DOCUMENT_WIDTH * .64, DOCUMENT_WIDTH * .36], style=table_style())
+    story.extend([
+        masthead, Spacer(1, 10),
+        HRFlowable(width="100%", thickness=.8, color=colors.black), Spacer(1, 3),
     ])
 
 
@@ -276,11 +348,11 @@ def page_decoration(canvas, doc) -> None:
     canvas.setFillColor(colors.black)
     if doc.page > 1:
         canvas.setFont("CVSansBold", 8)
-        canvas.drawString(doc.leftMargin, A4[1] - 12 * mm, PERSONA["nombre"])
+        canvas.drawString(doc.leftMargin + 6, A4[1] - 12 * mm, PERSONA["nombre"])
         canvas.setFont("CVSans", 8)
-        canvas.drawRightString(A4[0] - doc.rightMargin, A4[1] - 12 * mm, PERSONA["titulo"])
+        canvas.drawRightString(A4[0] - doc.rightMargin - 6, A4[1] - 12 * mm, PERSONA["titulo"])
         canvas.setLineWidth(.3)
-        canvas.line(doc.leftMargin, A4[1] - 14 * mm, A4[0] - doc.rightMargin, A4[1] - 14 * mm)
+        canvas.line(doc.leftMargin + 6, A4[1] - 14 * mm, A4[0] - doc.rightMargin - 6, A4[1] - 14 * mm)
     canvas.setFont("CVSans", 8)
     canvas.drawRightString(A4[0] - doc.rightMargin, 9 * mm, str(doc.page))
     canvas.restoreState()
@@ -289,7 +361,7 @@ def page_decoration(canvas, doc) -> None:
 def build_document(story: list, title: str) -> bytes:
     output = BytesIO()
     document = SimpleDocTemplate(
-        output, pagesize=A4, leftMargin=12 * mm, rightMargin=12 * mm,
+        output, pagesize=A4, leftMargin=14 * mm, rightMargin=14 * mm,
         topMargin=18 * mm, bottomMargin=13 * mm,
         title=title, author=PERSONA["nombre"], subject="Postulación profesional",
     )
@@ -306,7 +378,7 @@ def generate_cv(profile: str) -> bytes:
     header(story, styles)
 
     def section(title: str) -> None:
-        story.append(Paragraph(escape(title.upper()), styles["section"]))
+        story.append(SectionHeading(title))
 
     section("Perfil profesional")
     for paragraph in blocks(profile):
@@ -318,10 +390,16 @@ def generate_cv(profile: str) -> bytes:
         if index == 4:
             story.append(PageBreak())
             section("Experiencia profesional · Continuación")
+        metadata = Table([[
+            Paragraph(escape(item["lugar"]), styles["meta"]),
+            Paragraph(escape(item["fechas"]), styles["meta_right"]),
+        ]], colWidths=[DOCUMENT_WIDTH * .58, DOCUMENT_WIDTH * .42], style=table_style())
+        metadata.keepWithNext = True
+        metadata.spaceAfter = 3
         story.extend([
             Paragraph(escape(item["empresa"]), styles["company"]),
             Paragraph(escape(item["cargo"]), styles["role"]),
-            Paragraph(escape(f'{item["lugar"]} | {item["fechas"]}'), styles["meta"]),
+            metadata,
         ])
         for achievement in item["logros"]:
             story.append(Paragraph(escape(achievement), styles["bullet"], bulletText="-"))
@@ -420,24 +498,28 @@ def package_application(profile: str, job: str, company: str,
 
 
 def fingerprint(profile: str, job: str, company: str, include_letter: bool, letter_text: str) -> str:
-    payload = [profile, job, company, include_letter, letter_text if include_letter else ""]
+    payload = [DESIGN_VERSION, profile, job, company, include_letter, letter_text if include_letter else ""]
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()
 
 
 def preview_html(profile: str) -> str:
     e = html.escape
-    result = '<article class="cv-paper">'
+    result = '<article class="cv-paper" lang="es"><div class="masthead"><div class="identity">'
     result += f'<div class="name">{e(PERSONA["nombre"])}</div>'
-    result += f'<div class="title">{e(PERSONA["titulo"])}</div>'
-    result += f'<div class="contact">{e(PERSONA["especialidad"])}<br>'
-    result += e(" | ".join(PERSONA[k] for k in ("telefono", "correo", "ciudad")))
-    result += f'<br>{e(PERSONA["linkedin"])}</div><hr><h2>Perfil profesional</h2>'
+    result += f'<div class="title">{e(PERSONA["titulo"])} · UTFSM</div>'
+    result += f'<div class="specialty">{e(PERSONA["especialidad"])}</div></div>'
+    phone_url = "tel:" + re.sub(r"[^+0-9]", "", PERSONA["telefono"])
+    result += f'<div class="contact">{e(PERSONA["ciudad"])}<br>'
+    result += f'<a href="{phone_url}">{e(PERSONA["telefono"])}</a><br>'
+    result += f'<a href="mailto:{e(PERSONA["correo"])}">{e(PERSONA["correo"])}</a><br>'
+    result += f'<a class="linkedin" href="https://{e(PERSONA["linkedin"])}" target="_blank" rel="noopener noreferrer">LinkedIn / Enrique Brun</a>'
+    result += '</div></div><hr><h2>Perfil profesional</h2>'
     for paragraph in blocks(profile):
         result += "<p>" + e(paragraph).replace("\n", "<br>") + "</p>"
     result += "<h2>Experiencia profesional</h2>"
     for item in EXPERIENCIAS:
         result += f'<h3>{e(item["empresa"])}</h3><div>{e(item["cargo"])}</div>'
-        result += f'<div class="meta">{e(item["lugar"])} | {e(item["fechas"])}</div><ul>'
+        result += f'<div class="meta"><span>{e(item["lugar"])}</span><span>{e(item["fechas"])}</span></div><ul>'
         result += "".join(f"<li>{e(line)}</li>" for line in item["logros"]) + "</ul>"
     result += f'<h2>Educación</h2><h3>{e(EDUCACION[0])}</h3><p>{e(EDUCACION[1])}</p>'
     result += '<h2>Competencias técnicas e idiomas</h2><div class="small">'
@@ -465,8 +547,10 @@ def refresh_letter() -> None:
 def main() -> None:
     st.set_page_config(page_title="Enrique Brun | Postulaciones", layout="wide")
     st.html(CSS)
+    st.session_state.setdefault("target_job", DEFAULT_JOB)
+    st.session_state.setdefault("target_company", DEFAULT_COMPANY)
     st.session_state.setdefault("professional_profile", PERFIL_BASE)
-    st.session_state.setdefault("cover_letter", letter_template("", ""))
+    st.session_state.setdefault("cover_letter", letter_template(st.session_state["target_job"], st.session_state["target_company"]))
     st.title("Enrique Brun · Postulaciones")
     st.caption("CV personal · Ingeniería Civil Química · Universidad Técnica Federico Santa María")
 
@@ -475,7 +559,7 @@ def main() -> None:
         job = st.text_input("Cargo al que postulas", key="target_job", max_chars=160,
                             placeholder="Ej.: Ingeniero de Procesos")
     with right:
-        company = st.text_input("Empresa (opcional)", key="target_company", max_chars=120,
+        company = st.text_input("Empresa", key="target_company", max_chars=120,
                                 placeholder="Ej.: Empresa Minera")
     st.caption("Cargo y empresa identifican la carpeta de esta postulación. Fecha y hora se agregan al confirmar, con hora de Chile.")
 
@@ -2555,4 +2639,3 @@ EMBEDDED_FONTS = {
 
 if __name__ == "__main__":
     main()
-
