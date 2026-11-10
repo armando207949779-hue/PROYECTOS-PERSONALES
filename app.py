@@ -29,13 +29,13 @@ from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    Flowable, HRFlowable, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+    Flowable, HRFlowable, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 
 
-# DATOS FIJOS: transcritos del CV proporcionado. El único contenido del CV que
-# se modifica desde Streamlit es PERFIL_BASE. Para actualizar experiencia,
-# formación o contacto en el futuro, edita las constantes de este archivo.
+# DATOS FIJOS: antecedentes del CV y ubicaciones confirmadas por Enrique.
+# Cada experiencia resume dos aportes relevantes para minería y gran industria.
+# Desde Streamlit se adapta el perfil profesional a cada postulación.
 PERSONA = {
     "nombre": "Enrique Brun Urrutia",
     "titulo": "Ingeniero Civil Químico",
@@ -65,12 +65,11 @@ EXPERIENCIAS = [
     {
         "empresa": "ENAEX S.A. - Gerencia de Abastecimiento",
         "cargo": "Práctica Profesional | Analítica y automatización | Compras y contratos",
-        "lugar": "Santiago de Chile",
+        "lugar": "Las Condes, Santiago de Chile",
         "fechas": "04/2026 - 08/2026 (5 meses)",
         "logros": [
-            "Apoyé la gestión de abastecimiento de bienes y servicios mediante el análisis de información de compras, contratos y proveedores, con foco en trazabilidad, eficiencia y continuidad operacional.",
-            "Integré información de SAP ERP y SAP Ariba con antecedentes del SII, Banco Central e indicadores financieros para fortalecer el análisis y seguimiento de proveedores.",
-            "Desarrollé automatizaciones, reportes analíticos y tableros de indicadores para facilitar el control de gestión, reducir tareas manuales y apoyar la toma de decisiones del área.",
+            "Integré información de SAP ERP, SAP Ariba y fuentes externas para analizar compras, contratos y proveedores, con foco en trazabilidad y continuidad operacional.",
+            "Desarrollé automatizaciones y tableros de indicadores para apoyar el control de gestión y reducir tareas manuales en abastecimiento.",
         ],
     },
     {
@@ -79,9 +78,8 @@ EXPERIENCIAS = [
         "lugar": "Renca, Santiago de Chile",
         "fechas": "03/2026 - 08/2026 (6 meses)",
         "logros": [
-            "Analicé el proceso de elaboración y envasado de bebidas, relacionando variables operacionales, equipos y condiciones de funcionamiento con el desempeño de la planta.",
-            "Desarrollé indicadores, visualizaciones y tableros de control para facilitar el seguimiento de la operación y la identificación de brechas de desempeño.",
-            "Apliqué análisis de causa raíz y automatización de reportes para detectar pérdidas, comprender desviaciones y apoyar iniciativas de mejora continua.",
+            "Analicé variables de elaboración y envasado y desarrollé indicadores para monitorear el desempeño de la planta.",
+            "Apliqué análisis de causa raíz y automatización de reportes para identificar pérdidas y apoyar iniciativas de mejora continua.",
         ],
     },
     {
@@ -90,42 +88,38 @@ EXPERIENCIAS = [
         "lugar": "Salamanca, Chile",
         "fechas": "01/2026 - 03/2026 (3 meses)",
         "logros": [
-            "Desarrollé experiencia en terreno bajo sistema de turno 4x3, observando la operación, los equipos y las condiciones de control del circuito de molienda SAG.",
-            "Analicé grandes volúmenes de datos históricos y variables provenientes del DCS para estudiar su relación con la estabilidad, el desempeño y la eficiencia energética del proceso.",
-            "Integré observaciones de faena con análisis de datos para identificar patrones, desviaciones y oportunidades de mejora continua en la operación.",
+            "Analicé datos históricos del DCS para estudiar la estabilidad operacional y eficiencia energética del circuito de molienda SAG.",
+            "Integré observaciones de equipos y condiciones de operación en terreno, en turno 4x3, con análisis de datos para identificar desviaciones y oportunidades de mejora.",
         ],
     },
     {
         "empresa": "SQM - International Lithium - Gestión del Conocimiento",
         "cargo": "Práctica | Knowledge Management | Proyectos internacionales de litio",
-        "lugar": "Santiago de Chile",
+        "lugar": "Modalidad online",
         "fechas": "09/2025 - 12/2025 (4 meses)",
         "logros": [
-            "Participé en un proyecto de gestión y transferencia de conocimiento técnico para apoyar la disponibilidad de información entre SQM y sus operaciones y proyectos internacionales de litio.",
-            "Recopilé, clasifiqué y estandaricé planos, documentos, fotografías e informes técnicos de Operaciones, Procesos, Automatización, Energía, Calidad y Abastecimiento.",
-            "Estructuré información con criterios de trazabilidad y fácil consulta, contribuyendo a preservar conocimiento crítico y facilitar su utilización por equipos de proyectos en Australia y China.",
+            "Estandaricé documentación de procesos, operaciones y otras áreas técnicas para preservar conocimiento crítico de proyectos internacionales de litio.",
+            "Estructuré información con criterios de trazabilidad y consulta para apoyar su transferencia a equipos de proyectos en Australia y China.",
         ],
     },
     {
         "empresa": "Antofagasta Minerals - División de Procesos",
         "cargo": "Proyecto de Título | Optimización operacional con Machine Learning",
-        "lugar": "Santiago de Chile",
+        "lugar": "Corporativo · Las Condes, Santiago de Chile",
         "fechas": "04/2025 - 11/2025 (8 meses)",
         "logros": [
-            "Desarrollé un proyecto de optimización operacional del circuito de molienda SAG de Minera Los Pelambres, utilizando grandes volúmenes de datos históricos de planta.",
-            "Construí y evalué modelos predictivos para analizar la relación entre variables operacionales, capacidad de procesamiento y consumo específico de energía.",
-            "Identifiqué variables críticas, patrones de operación y escenarios con potencial de mejora, generando información técnica para apoyar el análisis y la toma de decisiones de procesos.",
+            "Construí y evalué modelos predictivos de capacidad de procesamiento y consumo específico de energía del circuito SAG de Minera Los Pelambres.",
+            "Identifiqué variables críticas y escenarios con potencial de mejora para apoyar decisiones de optimización operacional.",
         ],
     },
     {
         "empresa": "ENAP - Refinería Aconcagua - División Procesos",
         "cargo": "Práctica Industrial | Monitoreo, análisis y visualización de datos operacionales",
-        "lugar": "Concón, Chile",
+        "lugar": "Refinería Aconcagua · Concón, Chile",
         "fechas": "01/2025 - 03/2025 (3 meses)",
         "logros": [
-            "Apoyé el análisis de procesos de refinación mediante la interpretación de PFD y P&ID, visitas a planta y revisión de equipos, corrientes, instrumentos y condiciones operacionales.",
-            "Extraje y analicé datos históricos y variables de proceso desde el ecosistema AVEVA PI, utilizando tags operacionales para estudiar tendencias, indicadores y comportamiento de la operación.",
-            "Desarrollé análisis estadísticos, visualizaciones y reportes de desempeño, transformando datos de planta en información útil para el monitoreo y la identificación de oportunidades de mejora.",
+            "Analicé procesos de refinación mediante interpretación de PFD y P&ID, visitas a planta y revisión de equipos y condiciones operacionales.",
+            "Extraje y analicé datos de AVEVA PI para monitorear tendencias e indicadores e identificar oportunidades de mejora del desempeño operacional.",
         ],
     },
 ]
@@ -182,10 +176,11 @@ LETTER_FILENAME = "CARTA_PRESENTACION_ENRIQUE_BRUN.pdf"
 TIMEZONE = ZoneInfo("America/Santiago")
 DEFAULT_JOB = "Ingeniero de Procesos"
 DEFAULT_COMPANY = "Empresa objetivo"
-DESIGN_VERSION = "minimal-03"
+DESIGN_VERSION = "industrial-05"
 # El marco de SimpleDocTemplate añade 6 pt de relleno a cada lado.
 # Descontarlos mantiene encabezado, fechas y texto perfectamente alineados.
 DOCUMENT_WIDTH = A4[0] - 28 * mm - 12
+
 
 CSS = """
 <style>
@@ -213,8 +208,12 @@ h1, h2, h3 { letter-spacing: -.03em; }
 .cv-paper .meta { display: flex; justify-content: space-between; gap: 10px;
     font-size: 10px; margin: 3px 0 7px; }
 .cv-paper ul { margin: 4px 0 12px; padding-left: 16px; }
-.cv-paper li { margin-bottom: 4px; text-align: justify; }
+.cv-paper li { margin-bottom: 4px; text-align: left; }
 .cv-paper .small p { font-size: 11px; margin-bottom: 6px; }
+.cv-paper .compact-entry { margin: 12px 0 3px; }
+.cv-paper .compact-role { display: flex; justify-content: space-between; gap: 12px;
+    font-size: 10px; margin-bottom: 5px; }
+.cv-paper .other p { text-align: left; font-size: 11px; }
 @media (max-width: 650px) {
  .cv-paper .masthead { display: block; }
  .cv-paper .contact { text-align: left; margin-top: 12px; }
@@ -261,7 +260,7 @@ def blocks(value: str) -> list[str]:
 def pdf_styles() -> dict:
     register_fonts()
     body = ParagraphStyle(
-        "body", fontName="CVSans", fontSize=9.2, leading=11.6,
+        "body", fontName="CVSans", fontSize=9.5, leading=12,
         textColor=colors.black, spaceAfter=4, splitLongWords=True,
         alignment=TA_JUSTIFY, justifyLastLine=0, justifyBreaks=0,
     )
@@ -276,8 +275,8 @@ def pdf_styles() -> dict:
         "role": ParagraphStyle("role", parent=body, fontSize=9, leading=11, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
         "meta": ParagraphStyle("meta", parent=body, fontSize=8.2, leading=10, spaceAfter=0, keepWithNext=True, alignment=TA_LEFT),
         "meta_right": ParagraphStyle("meta_right", parent=body, fontSize=8.2, leading=10, spaceAfter=0, alignment=TA_RIGHT),
-        "bullet": ParagraphStyle("bullet", parent=body, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=2),
-        "small": ParagraphStyle("small", parent=body, fontSize=8.6, leading=10.4, spaceAfter=1.4),
+        "bullet": ParagraphStyle("bullet", parent=body, fontSize=9.5, leading=12, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=3, alignment=TA_LEFT),
+        "small": ParagraphStyle("small", parent=body, fontSize=8.7, leading=10.6, spaceAfter=2, alignment=TA_LEFT),
         "date": ParagraphStyle("date", parent=body, alignment=2, spaceAfter=22),
         "letter": ParagraphStyle("letter", parent=body, fontSize=10.5, leading=16, spaceAfter=11),
     }
@@ -376,47 +375,38 @@ def generate_cv(profile: str) -> bytes:
     styles = pdf_styles()
     story = []
     header(story, styles)
-
-    def section(title: str) -> None:
-        story.append(SectionHeading(title))
-
-    section("Perfil profesional")
+    story.append(SectionHeading("Perfil profesional"))
     for paragraph in blocks(profile):
         story.append(Paragraph(escape(paragraph).replace("\n", "<br/>"), styles["body"]))
-    section("Experiencia profesional")
-    for index, item in enumerate(EXPERIENCIAS):
-        # Conserva la distribución del documento de origen. Un perfil extenso
-        # puede sumar páginas; ReportLab mantiene todo el contenido sin recortar.
-        if index == 4:
-            story.append(PageBreak())
-            section("Experiencia profesional · Continuación")
+    story.append(SectionHeading("Experiencia profesional"))
+    for item in EXPERIENCIAS:
         metadata = Table([[
             Paragraph(escape(item["lugar"]), styles["meta"]),
             Paragraph(escape(item["fechas"]), styles["meta_right"]),
-        ]], colWidths=[DOCUMENT_WIDTH * .58, DOCUMENT_WIDTH * .42], style=table_style())
-        metadata.keepWithNext = True
-        metadata.spaceAfter = 3
-        story.extend([
+        ]], colWidths=[DOCUMENT_WIDTH * .64, DOCUMENT_WIDTH * .36], style=table_style())
+        metadata.spaceAfter = 4
+        entry = [
             Paragraph(escape(item["empresa"]), styles["company"]),
             Paragraph(escape(item["cargo"]), styles["role"]),
             metadata,
-        ])
+        ]
         for achievement in item["logros"]:
-            story.append(Paragraph(escape(achievement), styles["bullet"], bulletText="-"))
-        story.append(Spacer(1, 3))
-
-    section("Educación")
+            entry.append(Paragraph(escape(achievement), styles["bullet"], bulletText="-"))
+        # Conserva cada experiencia unida y deja que la paginación sea natural.
+        story.append(KeepTogether(entry))
+        story.append(Spacer(1, 4))
+    story.append(SectionHeading("Educación"))
     story.append(Paragraph(escape(EDUCACION[0]), styles["company"]))
     story.append(Paragraph(escape(EDUCACION[1]), styles["body"]))
-    section("Competencias técnicas e idiomas")
+    story.append(SectionHeading("Competencias técnicas e idiomas"))
     for title, description in COMPETENCIAS:
         story.append(Paragraph(f"<b>{escape(title)}:</b> {escape(description)}", styles["small"]))
-    section("Habilidades profesionales")
+    story.append(SectionHeading("Habilidades profesionales"))
     story.append(Paragraph(escape(HABILIDADES), styles["small"]))
-    section("Certificaciones")
+    story.append(SectionHeading("Certificaciones"))
     for certification in CERTIFICACIONES:
         story.append(Paragraph(escape(certification), styles["small"]))
-    section("Docencia y actividades")
+    story.append(SectionHeading("Docencia y actividades"))
     for title, description in DOCENCIA:
         story.append(KeepTogether([
             Paragraph(f"<b>{escape(title)}</b>", styles["small"]),
@@ -550,6 +540,12 @@ def main() -> None:
     st.session_state.setdefault("target_job", DEFAULT_JOB)
     st.session_state.setdefault("target_company", DEFAULT_COMPANY)
     st.session_state.setdefault("professional_profile", PERFIL_BASE)
+    # Al actualizar desde la edición compacta, recupera el perfil completo una
+    # sola vez. Conserva un borrador anterior por si necesitas copiarlo luego.
+    if st.session_state.get("_industrial_profile_initialized") != DESIGN_VERSION:
+        st.session_state["_previous_profile_draft"] = st.session_state.get("professional_profile", "")
+        st.session_state["professional_profile"] = PERFIL_BASE
+        st.session_state["_industrial_profile_initialized"] = DESIGN_VERSION
     st.session_state.setdefault("cover_letter", letter_template(st.session_state["target_job"], st.session_state["target_company"]))
     st.title("Enrique Brun · Postulaciones")
     st.caption("CV personal · Ingeniería Civil Química · Universidad Técnica Federico Santa María")
@@ -568,12 +564,12 @@ def main() -> None:
         editor, preview = st.columns((1, 1.12), gap="large")
         with editor:
             st.subheader("Perfil profesional")
-            st.write("Adapta este texto a la vacante. Tu experiencia, formación y demás antecedentes ya están incorporados.")
+            st.write("Adapta el perfil a la vacante. Las seis experiencias ya están resumidas con foco en minería, energía y procesos industriales.")
             profile = st.text_area("Texto del perfil", key="professional_profile", height=390,
                                    max_chars=3500, help="Separa los párrafos con una línea en blanco.")
-            st.caption(f"{len(clean(profile)):,} caracteres · Recomendado: 700 a 1.200 para conservar una lectura ágil.")
+            st.caption(f"{len(clean(profile).split())} palabras · Edita solo lo necesario para la postulación.")
             st.button("Restaurar perfil original", key="reset_profile", on_click=reset_profile)
-            st.caption("El PDF usa una tipografía sans serif, jerarquías claras, márgenes uniformes y texto seleccionable. El perfil original está distribuido en dos páginas junto al resto de tus antecedentes.")
+            st.caption("Diseño completo con dos aportes por experiencia, ubicaciones detalladas y todas tus secciones de formación y competencias.")
             st.caption("Si escribes un perfil más extenso, el documento puede sumar páginas para conservar todo el contenido.")
         with preview:
             st.subheader("Vista previa del CV")
