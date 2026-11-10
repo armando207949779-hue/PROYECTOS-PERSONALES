@@ -165,7 +165,9 @@ LETTER_FILENAME = "CARTA_PRESENTACION_ENRIQUE_BRUN.pdf"
 TIMEZONE = ZoneInfo("America/Santiago")
 DEFAULT_JOB = "Ingeniero de Procesos"
 DEFAULT_COMPANY = "Empresa objetivo"
-DESIGN_VERSION = "industrial-final-06"
+DESIGN_VERSION = "letter-natural-07"
+PROFILE_VERSION = "industrial-final-06"
+LETTER_VERSION = "natural-01"
 # El marco de SimpleDocTemplate añade 6 pt de relleno a cada lado.
 # Descontarlos mantiene encabezado, fechas y texto perfectamente alineados.
 DOCUMENT_WIDTH = A4[0] - 28 * mm - 12
@@ -405,21 +407,34 @@ def generate_cv(profile: str) -> bytes:
     return build_document(story, "Enrique Brun Urrutia | Ingeniero Civil Químico | UTFSM")
 
 
-def letter_template(job: str, company: str) -> str:
-    job = clean(job) or "[cargo al que postulo]"
-    company = clean(company) or "su organización"
+def company_is_specific(company: str) -> bool:
+    return clean(company).casefold() not in {"", DEFAULT_COMPANY.casefold(), "empresa", "nombre de la empresa"}
+
+
+def letter_template(job: str = "", company: str = "", personalized: bool = False) -> str:
+    """La versión genérica es reutilizable y no contiene nombres pendientes."""
+    opening = "Me interesa la posibilidad de aportar a su equipo y seguir desarrollándome profesionalmente."
+    if personalized and clean(job):
+        destination = " en " + clean(company) if company_is_specific(company) else ""
+        opening = f"Me interesa postular al cargo de {clean(job)}{destination}."
+    elif personalized and company_is_specific(company):
+        opening = f"Me interesa la posibilidad de formar parte del equipo de {clean(company)}."
     return (
         "Estimado equipo de selección:\n\n"
-        f"Me interesa postular al cargo de {job} en {company}. Soy Ingeniero Civil "
-        "Químico de la Universidad Técnica Federico Santa María, con experiencia "
-        "en ingeniería de procesos, mejora continua y análisis de información operacional.\n\n"
-        "Mis experiencias en minería, energía, manufactura y abastecimiento me han "
-        "permitido combinar el trabajo en terreno con el análisis de datos, la "
-        "automatización de reportes y la identificación de oportunidades de mejora. "
-        "Busco contribuir con una mirada analítica, rigurosa y colaborativa a los "
-        "desafíos de su equipo.\n\n"
-        "Quedo disponible para conversar sobre cómo mi experiencia y conocimientos "
-        "pueden aportar a esta posición. Gracias por su tiempo y consideración.\n\n"
+        f"{opening} Soy Ingeniero Civil Químico de la Universidad Técnica Federico "
+        "Santa María, con experiencia en procesos industriales, análisis de datos "
+        "y mejora continua.\n\n"
+        "Durante mis prácticas y mi proyecto de título he trabajado tanto en planta "
+        "como en entornos corporativos de minería, energía, manufactura y "
+        "abastecimiento. En ese recorrido he desarrollado reportes, indicadores y "
+        "modelos predictivos, combinando herramientas de análisis con la comprensión "
+        "de los procesos y sus condiciones de operación.\n\n"
+        "Busco un espacio donde pueda asumir responsabilidades, aprender de personas "
+        "con experiencia y contribuir con un trabajo serio, ordenado y colaborativo. "
+        "Me motiva participar en mejoras que tengan una aplicación concreta en la "
+        "operación y trabajar junto a quienes conocen de cerca sus desafíos.\n\n"
+        "Gracias por considerar mi postulación. Quedo disponible para conversar "
+        "en una entrevista sobre mi experiencia y cómo podría aportar a su equipo.\n\n"
         "Atentamente,"
     )
 
@@ -433,10 +448,12 @@ def generate_letter(text: str, job: str, company: str, created_at: datetime) -> 
     header(story, styles)
     story.append(Spacer(1, 12))
     story.append(Paragraph(f'Santiago de Chile, {created_at:%d/%m/%Y}', styles["date"]))
-    if company:
+    if company_is_specific(company):
         story.append(Paragraph(escape(company), styles["company"]))
-    if job:
+    if job and company_is_specific(company):
         story.append(Paragraph("Postulación: " + escape(job), styles["company"]))
+    elif not company_is_specific(company):
+        story.append(Paragraph("Carta de presentación", styles["company"]))
     story.append(Spacer(1, 14))
     for paragraph in blocks(text):
         story.append(Paragraph(escape(paragraph).replace("\n", "<br/>"), styles["letter"]))
@@ -481,7 +498,7 @@ def fingerprint(profile: str, job: str, company: str, include_letter: bool, lett
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()
 
 
-def preview_html(profile: str) -> str:
+def preview_header_html() -> str:
     e = html.escape
     result = '<article class="cv-paper" lang="es"><div class="masthead"><div class="identity">'
     result += f'<div class="name">{e(PERSONA["nombre"])}</div>'
@@ -492,7 +509,13 @@ def preview_html(profile: str) -> str:
     result += f'<a href="{phone_url}">{e(PERSONA["telefono"])}</a><br>'
     result += f'<a href="mailto:{e(PERSONA["correo"])}">{e(PERSONA["correo"])}</a><br>'
     result += f'<a class="linkedin" href="https://{e(PERSONA["linkedin"])}" target="_blank" rel="noopener noreferrer">LinkedIn / Enrique Brun</a>'
-    result += '</div></div><hr><h2>Perfil profesional</h2>'
+    result += '</div></div><hr>'
+    return result
+
+
+def preview_html(profile: str) -> str:
+    e = html.escape
+    result = preview_header_html() + "<h2>Perfil profesional</h2>"
     for paragraph in blocks(profile):
         result += "<p>" + e(paragraph).replace("\n", "<br>") + "</p>"
     result += "<h2>Experiencia profesional</h2>"
@@ -513,14 +536,44 @@ def preview_html(profile: str) -> str:
     return result + "</div></article>"
 
 
+def letter_preview_html(text: str, job: str, company: str) -> str:
+    e = html.escape
+    result = preview_header_html()
+    result += f'<p style="text-align:right;margin:20px 0">Santiago de Chile, {datetime.now(TIMEZONE):%d/%m/%Y}</p>'
+    if company_is_specific(company):
+        result += f'<p><strong>{e(clean(company))}</strong></p>'
+        if clean(job):
+            result += f'<p><strong>Postulación: {e(clean(job))}</strong></p>'
+    else:
+        result += '<h2>Carta de presentación</h2>'
+    for paragraph in blocks(text):
+        result += '<p style="margin-bottom:16px">' + e(paragraph).replace("\n", "<br>") + '</p>'
+    result += f'<p><strong>{e(PERSONA["nombre"])}</strong></p>'
+    return result + '</article>'
+
+
+def reset_generic_letter() -> None:
+    text = letter_template()
+    st.session_state["cover_letter"] = text
+    st.session_state["_managed_letter_text"] = text
+    st.session_state["_letter_mode"] = "generic"
+
+
+def restore_previous_letter() -> None:
+    st.session_state["cover_letter"] = st.session_state.get("_previous_letter_draft", letter_template())
+    st.session_state["_letter_mode"] = "custom"
+
+
 def reset_profile() -> None:
     st.session_state["professional_profile"] = PERFIL_BASE
 
 
 def refresh_letter() -> None:
-    st.session_state["cover_letter"] = letter_template(
-        st.session_state.get("target_job", ""), st.session_state.get("target_company", "")
-    )
+    text = letter_template(st.session_state.get("target_job", ""),
+                           st.session_state.get("target_company", ""), personalized=True)
+    st.session_state["cover_letter"] = text
+    st.session_state["_managed_letter_text"] = text
+    st.session_state["_letter_mode"] = "personalized"
 
 
 def main() -> None:
@@ -531,11 +584,14 @@ def main() -> None:
     st.session_state.setdefault("professional_profile", PERFIL_BASE)
     # Al actualizar, carga el perfil base de esta edición una sola vez.
     # Conserva el texto anterior como borrador de sesión.
-    if st.session_state.get("_industrial_profile_initialized") != DESIGN_VERSION:
+    if st.session_state.get("_industrial_profile_initialized") != PROFILE_VERSION:
         st.session_state["_previous_profile_draft"] = st.session_state.get("professional_profile", "")
         st.session_state["professional_profile"] = PERFIL_BASE
-        st.session_state["_industrial_profile_initialized"] = DESIGN_VERSION
-    st.session_state.setdefault("cover_letter", letter_template(st.session_state["target_job"], st.session_state["target_company"]))
+        st.session_state["_industrial_profile_initialized"] = PROFILE_VERSION
+    if st.session_state.get("_letter_template_version") != LETTER_VERSION:
+        st.session_state["_previous_letter_draft"] = st.session_state.get("cover_letter", "")
+        reset_generic_letter()
+        st.session_state["_letter_template_version"] = LETTER_VERSION
     st.title("Enrique Brun · Postulaciones")
     st.caption("CV personal · Ingeniería Civil Química · Universidad Técnica Federico Santa María")
 
@@ -566,13 +622,50 @@ def main() -> None:
             with st.container(height=720, border=True):
                 st.html(preview_html(profile))
 
+    # Si la plantilla personalizada no fue editada manualmente, actualiza su
+    # primera frase al cambiar cargo o empresa. Los textos propios se conservan.
+    if (st.session_state.get("_letter_mode") == "personalized"
+            and st.session_state["cover_letter"] == st.session_state.get("_managed_letter_text")):
+        updated = letter_template(job, company, personalized=True)
+        st.session_state["cover_letter"] = updated
+        st.session_state["_managed_letter_text"] = updated
+
     with letter_tab:
-        st.subheader("Carta de presentación")
-        st.caption("Opcional. Puedes incluir su PDF en la misma carpeta que tu CV.")
-        include_letter = st.checkbox("Incluir carta en la carpeta de postulación", key="include_letter")
-        st.button("Cargar plantilla con cargo y empresa actuales", key="refresh_letter", on_click=refresh_letter)
-        letter_text = st.text_area("Texto de la carta", key="cover_letter", height=350, max_chars=12000)
-        st.caption("El botón de plantilla reemplaza el texto de la carta. Revisa y personaliza el contenido antes de confirmar.")
+        editor, preview = st.columns((1, 1.12), gap="large")
+        with editor:
+            st.subheader("Carta de presentación")
+            st.write("Una carta reutilizable, basada en tu experiencia y lista para editar con tus propias palabras.")
+            include_letter = st.checkbox("Incluir carta en la carpeta de postulación", key="include_letter")
+            st.caption("Los botones de plantilla reemplazan el texto actual.")
+            st.button("Usar carta genérica", key="generic_letter", on_click=reset_generic_letter)
+            st.button("Personalizar con cargo y empresa", key="refresh_letter", on_click=refresh_letter)
+            letter_text = st.text_area("Texto de la carta", key="cover_letter", height=470, max_chars=12000,
+                                      help="El nombre y los datos de contacto se agregan automáticamente al PDF.")
+            st.caption("La carta genérica no menciona una empresa concreta. Si personalizas la plantilla, revisa los datos antes de descargar.")
+            if st.session_state.get("_previous_letter_draft"):
+                with st.expander("Recuperar el texto de mi carta anterior"):
+                    st.text(st.session_state["_previous_letter_draft"])
+                    st.button("Recuperar carta anterior", key="previous_letter", on_click=restore_previous_letter)
+        with preview:
+            st.subheader("Vista previa de la carta")
+            with st.container(height=680, border=True):
+                st.html(letter_preview_html(letter_text, job, company))
+            letter_hash = hashlib.sha256(json.dumps([LETTER_VERSION, letter_text, job, company], ensure_ascii=False).encode()).hexdigest()
+            saved_letter = st.session_state.get("_standalone_letter")
+            if saved_letter and saved_letter["hash"] != letter_hash:
+                st.session_state.pop("_standalone_letter", None)
+                saved_letter = None
+            if st.button("Confirmar y generar PDF de la carta", key="generate_letter", type="primary", width="stretch"):
+                try:
+                    pdf = generate_letter(letter_text, job, company, datetime.now(TIMEZONE))
+                except ValueError as exc:
+                    st.error(str(exc))
+                else:
+                    saved_letter = {"hash": letter_hash, "pdf": pdf}
+                    st.session_state["_standalone_letter"] = saved_letter
+            if saved_letter:
+                st.download_button("Descargar carta en PDF", saved_letter["pdf"], LETTER_FILENAME,
+                                   mime="application/pdf", key="standalone_letter_download", width="stretch")
 
     st.divider()
     current = fingerprint(profile, job, company, include_letter, letter_text)
@@ -588,8 +681,6 @@ def main() -> None:
             st.error("Completa el perfil profesional.")
         elif not clean(job):
             st.error("Indica el cargo para identificar esta postulación.")
-        elif include_letter and ("[cargo al que postulo]" in letter_text or "[nombre de la empresa]" in letter_text):
-            st.error("Completa los marcadores de la carta o pulsa «Cargar plantilla con cargo y empresa actuales».")
         else:
             try:
                 with st.spinner("Preparando tu postulación..."):
