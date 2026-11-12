@@ -1,7 +1,7 @@
-"""CV completo de Enrique Brun Urrutia — diseño clásico inspirado en LaTeX.
+"""CV y carta de presentación independientes — diseño clásico inspirado en LaTeX.
 
 Diseño A4 de una columna con títulos centrados y reglas horizontales.
-Streamlit: Principal + Detalles y un único botón «Generar PDF».
+Streamlit: Principal + Detalles, dos descargas independientes en PDF.
 
 Instalación: pip install streamlit reportlab
 Ejecución:    streamlit run app.py
@@ -12,6 +12,8 @@ ubicaciones, nombres de unidades y competencias antes de cada postulación.
 
 from __future__ import annotations
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import html
 import re
 from io import BytesIO
@@ -191,6 +193,33 @@ ACTIVIDADES = (
 )
 
 ARCHIVO_PDF = "CV_Enrique_Brun_Urrutia.pdf"
+ARCHIVO_CARTA = "Carta_de_Presentacion_Enrique_Brun_Urrutia.pdf"
+ZONA_HORARIA = ZoneInfo("America/Santiago")
+
+# El usuario puede adaptar el texto a cada postulación. Los campos de cargo y
+# empresa se colocan en el encabezado del PDF, no se insertan en el texto libre.
+CARTA_BASE = (
+    "Soy Ingeniero Civil Químico de la Universidad Técnica Federico Santa María "
+    "y me interesa aportar en desafíos de ingeniería de procesos, analítica de "
+    "datos y mejora operacional. Mi experiencia en minería, energía, manufactura "
+    "y abastecimiento me ha permitido conectar el conocimiento de los procesos "
+    "industriales con herramientas analíticas para apoyar decisiones técnicas "
+    "y de gestión.\n\n"
+    "En Antofagasta Minerals y Minera Los Pelambres trabajé en el análisis "
+    "de datos históricos de molienda SAG y en modelos predictivos relacionados "
+    "con la capacidad de procesamiento y el consumo energético. En ENAEX y CCU "
+    "participé en el desarrollo de indicadores, automatizaciones y reportes "
+    "para facilitar el seguimiento y la mejora de procesos. Mis experiencias "
+    "en ENAP y SQM complementaron esta visión desde el monitoreo de operaciones "
+    "y la gestión de información técnica.\n\n"
+    "Me caracterizan la curiosidad, las ganas de descubrir nuevas soluciones "
+    "y el aprendizaje continuo. Trabajo con responsabilidad, rigurosidad y "
+    "compromiso con los objetivos que asumo. Creo en el potencial de la "
+    "industria nacional y busco desafíos que me exijan superarme cada día, "
+    "aprender de equipos diversos y contribuir con resultados concretos.\n\n"
+    "Agradezco la consideración de mi postulación y quedo disponible para "
+    "conversar sobre cómo podría aportar a su equipo."
+)
 
 # -----------------------------------------------------------------------------
 # ESTILO CLÁSICO / LATEX (una columna, sin cajas, sin iconos)
@@ -429,7 +458,89 @@ def generar_pdf(perfil: str) -> bytes:
 
 
 # -----------------------------------------------------------------------------
-# APP: una acción, sin barra lateral, sin ZIP, sin carta y sin botones extra.
+# CARTA: PDF A4 independiente, con el mismo lenguaje visual del CV.
+# -----------------------------------------------------------------------------
+LETTER_STYLES = {
+    "date": text_style("letter_date", 9.3, 14, SECONDARY, align=TA_RIGHT),
+    "recipient": text_style("letter_recipient", 10.0, 15.2, INK, "Helvetica-Bold", after=5),
+    "subject": text_style("letter_subject", 9.65, 14.0, NAVY, "Helvetica-Bold", after=4),
+    "salutation": text_style("letter_salutation", 10.2, 16.2, INK, after=12),
+    "body": text_style("letter_body", 10.15, 16.6, INK, align=TA_JUSTIFY, after=13),
+    "signoff": text_style("letter_signoff", 10.2, 15.7, INK, after=1),
+    "signature": text_style("letter_signature", 10.2, 15.4, NAVY, "Helvetica-Bold"),
+}
+
+
+def fecha_larga(fecha: datetime) -> str:
+    meses = (
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+    )
+    return f"{fecha.day} de {meses[fecha.month - 1]} de {fecha.year}"
+
+
+def generar_pdf_carta(texto: str, cargo: str = "", empresa: str = "",
+                      fecha: datetime | None = None) -> bytes:
+    """Genera únicamente la carta. Nunca combina ni modifica el CV."""
+    parrafos = bloques_perfil(texto)
+    if not parrafos:
+        raise ValueError("La carta de presentación no puede estar vacía.")
+    fecha = fecha or datetime.now(ZONA_HORARIA)
+    cargo, empresa = cargo.strip(), empresa.strip()
+    output = BytesIO()
+    doc = BaseDocTemplate(
+        output, pagesize=A4,
+        leftMargin=22 * mm, rightMargin=22 * mm,
+        topMargin=21 * mm, bottomMargin=19 * mm,
+        title="Carta de presentación | Enrique Brun Urrutia",
+        author=PERSONA["nombre"], subject="Carta de postulación", pageCompression=1,
+    )
+    body = Frame(
+        doc.leftMargin, doc.bottomMargin,
+        PAGE_W - doc.leftMargin - doc.rightMargin,
+        PAGE_H - doc.topMargin - doc.bottomMargin,
+        leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
+        id="letter_body",
+    )
+    doc.addPageTemplates(PageTemplate(id="Carta", frames=[body]))
+    email = esc(PERSONA["correo"])
+    story = [
+        NameHeading(PERSONA["nombre"]),
+        Paragraph(
+            esc(PERSONA["titulo"]) + " &nbsp;|&nbsp; Ingeniería de Procesos &nbsp;|&nbsp; Analítica Industrial",
+            STYLES["strap"],
+        ),
+        Paragraph(
+            esc(PERSONA["ciudad"]) + " &nbsp;·&nbsp; " + esc(PERSONA["telefono"]) +
+            f' &nbsp;·&nbsp; <link href="mailto:{email}" color="#1A334F">{email}</link>',
+            STYLES["contact"],
+        ),
+        Spacer(1, 7),
+        SectionHeading("Carta de presentación"),
+        Spacer(1, 10),
+        Paragraph("Santiago de Chile, " + fecha_larga(fecha), LETTER_STYLES["date"]),
+        Spacer(1, 21),
+    ]
+    if empresa:
+        story.append(Paragraph(esc(empresa), LETTER_STYLES["recipient"]))
+    if cargo:
+        story.append(Paragraph("Postulación: " + esc(cargo), LETTER_STYLES["subject"]))
+    if cargo or empresa:
+        story.append(Spacer(1, 13))
+    story.append(Paragraph("Estimado equipo de selección:", LETTER_STYLES["salutation"]))
+    for bloque in parrafos:
+        story.append(Paragraph(esc(bloque), LETTER_STYLES["body"]))
+    story.extend([
+        Spacer(1, 14),
+        Paragraph("Atentamente,", LETTER_STYLES["signoff"]),
+        Paragraph(esc(PERSONA["nombre"]), LETTER_STYLES["signature"]),
+    ])
+    doc.build(story)
+    return output.getvalue()
+
+
+# -----------------------------------------------------------------------------
+# APP: dos descargas separadas y sin ZIP, dos pestañas, sin barra lateral.
 # -----------------------------------------------------------------------------
 APP_CSS = """
 <style>
@@ -463,49 +574,100 @@ button[data-baseweb="tab"] {font-weight: 600;}
 
 
 def main() -> None:
-    st.set_page_config(page_title="CV | Enrique Brun Urrutia", layout="centered")
+    st.set_page_config(page_title="Postulaciones | Enrique Brun Urrutia", layout="centered")
     st.markdown(APP_CSS, unsafe_allow_html=True)
-    # Si la sesión tenía el perfil estándar anterior, incorpora esta revisión.
-    # Un perfil editado manualmente por el usuario no se sobrescribe.
+
+    # Conserva perfiles personalizados en sesiones existentes.
     if st.session_state.get("_perfil_revision") != "industria-justificado-02":
         actual = st.session_state.get("perfil_profesional", PERFIL_BASE_ANTERIOR)
         if actual in (PERFIL_ANTERIOR, PERFIL_BASE_ANTERIOR):
             st.session_state["perfil_profesional"] = PERFIL_BASE
         st.session_state["_perfil_revision"] = "industria-justificado-02"
     st.session_state.setdefault("perfil_profesional", PERFIL_BASE)
+    st.session_state.setdefault("texto_carta", CARTA_BASE)
+    st.session_state.setdefault("cargo_postulacion", "")
+    st.session_state.setdefault("empresa_postulacion", "")
+
     st.markdown(
         '<div class="cv-h1">ENRIQUE BRUN URRUTIA</div>'
         '<div class="cv-sub">Ingeniería de Procesos &nbsp;·&nbsp; Analítica Industrial &nbsp;·&nbsp; Optimización</div>',
         unsafe_allow_html=True,
     )
-    primary, details = st.tabs(["Principal", "Detalles"])
-    with primary:
-        profile = st.session_state["perfil_profesional"].strip()
-        preview = "".join(f"<p>{html.escape(p)}</p>" for p in bloques_perfil(profile))
+    principal, detalles = st.tabs(["Principal", "Detalles"])
+    with principal:
+        perfil = st.session_state["perfil_profesional"].strip()
+        vista_previa = "".join(
+            f"<p>{html.escape(p)}</p>" for p in bloques_perfil(perfil)
+        )
         st.markdown(
             '<div class="cv-section">PERFIL PROFESIONAL</div><hr class="cv-rule">'
-            f'<div class="cv-profile" lang="es">{preview}</div>',
+            f'<div class="cv-profile" lang="es">{vista_previa}</div>',
             unsafe_allow_html=True,
         )
-        if profile:
-            st.download_button(
-                "Generar PDF", data=generar_pdf(profile), file_name=ARCHIVO_PDF,
-                mime="application/pdf", type="primary", use_container_width=True,
-                key="download_full_cv",
+        cv_col, carta_col = st.columns(2, gap="medium")
+        with cv_col:
+            if perfil:
+                st.download_button(
+                    "Generar CV (PDF)", data=generar_pdf(perfil),
+                    file_name=ARCHIVO_PDF, mime="application/pdf",
+                    type="primary", use_container_width=True, key="descargar_cv",
+                )
+            else:
+                st.info("Completa el perfil en Detalles.")
+        with carta_col:
+            texto_carta = st.session_state["texto_carta"].strip()
+            if texto_carta:
+                try:
+                    carta_pdf = generar_pdf_carta(
+                        texto_carta,
+                        cargo=st.session_state["cargo_postulacion"],
+                        empresa=st.session_state["empresa_postulacion"],
+                    )
+                except ValueError as exc:
+                    st.error(str(exc))
+                else:
+                    st.download_button(
+                        "Generar carta (PDF)", data=carta_pdf,
+                        file_name=ARCHIVO_CARTA, mime="application/pdf",
+                        use_container_width=True, key="descargar_carta",
+                    )
+            else:
+                st.info("Completa la carta en Detalles.")
+        st.caption("Dos documentos PDF independientes. Personaliza la carta en Detalles antes de descargarla.")
+
+    with detalles:
+        st.text_area(
+            "Perfil profesional del CV", key="perfil_profesional", height=220,
+            max_chars=3500,
+        )
+        st.markdown('<div class="cv-section">CARTA DE PRESENTACIÓN</div><hr class="cv-rule">', unsafe_allow_html=True)
+        cargo_col, empresa_col = st.columns(2, gap="medium")
+        with cargo_col:
+            st.text_input(
+                "Cargo (opcional)", key="cargo_postulacion", max_chars=120,
+                placeholder="Ej.: Ingeniero de Procesos",
             )
-        else:
-            st.info("Escribe el perfil profesional en la pestaña Detalles.")
-    with details:
-        st.text_area("Perfil profesional", key="perfil_profesional", height=220, max_chars=3500)
+        with empresa_col:
+            st.text_input(
+                "Empresa (opcional)", key="empresa_postulacion", max_chars=120,
+                placeholder="Ej.: Empresa objetivo",
+            )
+        st.text_area(
+            "Texto de la carta", key="texto_carta", height=340,
+            max_chars=10000, help="Separa los párrafos con una línea en blanco.",
+        )
         st.markdown('<div class="cv-section">EXPERIENCIA PROFESIONAL</div><hr class="cv-rule">', unsafe_allow_html=True)
-        for experience_item in EXPERIENCIAS:
+        for item in EXPERIENCIAS:
             st.markdown(
                 '<div class="cv-detail">'
-                f'<div class="cv-company">{html.escape(experience_item["empresa"])}</div>'
-                f'<div class="cv-meta">{html.escape(experience_item["area"])} · {html.escape(experience_item["fechas"])}</div>'
+                f'<div class="cv-company">{html.escape(item["empresa"])}</div>'
+                f'<div class="cv-meta">{html.escape(item["area"])} · {html.escape(item["fechas"])}</div>'
                 '</div>', unsafe_allow_html=True,
             )
-        st.caption("El PDF completo incluye las seis experiencias, educación, competencias prioritarias, certificaciones y docencia.")
+        st.caption(
+            "El CV conserva sus seis experiencias, educación, competencias, certificaciones y docencia. "
+            "La carta se descarga por separado."
+        )
 
 
 if __name__ == "__main__":
