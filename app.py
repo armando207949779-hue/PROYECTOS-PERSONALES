@@ -19,7 +19,7 @@ from xml.sax.saxutils import escape
 
 import streamlit as st
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
@@ -42,8 +42,8 @@ PERSONA = {
     "linkedin": "linkedin.com/in/enrique-brun-248a02261/",
 }
 
-# Perfil ejecutivo: aporta diferenciación técnica y motivación personal sin
-# prometer resultados no verificados ni recurrir a adjetivos grandilocuentes.
+# Conservado para actualizar automáticamente el antiguo texto de ejemplo sin
+# sobrescribir el perfil de quienes ya lo editaron en la aplicación.
 PERFIL_ANTERIOR = (
     "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
     "con experiencia en minería, refinación, manufactura y abastecimiento. "
@@ -54,7 +54,8 @@ PERFIL_ANTERIOR = (
     "para identificar desviaciones y oportunidades de mejora operacional."
 )
 
-PERFIL_BASE = (
+# Versión previa del perfil para migrar solo el texto predeterminado de la app.
+PERFIL_BASE_ANTERIOR = (
     "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
     "con experiencia en minería, energía, manufactura y abastecimiento. "
     "Integro ingeniería de procesos, analítica de datos y automatización para "
@@ -67,6 +68,23 @@ PERFIL_BASE = (
     "desafíos exigentes para contribuir a su desarrollo y superarme cada día."
 )
 
+# Valor técnico en el primer párrafo y motivación personal en el segundo.
+# Se evitan porcentajes o ahorros que no estén acreditados.
+PERFIL_BASE = (
+    "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
+    "orientado a la analítica de datos, inteligencia de negocios y optimización "
+    "de procesos industriales. Experiencia en minería, energía, manufactura y "
+    "abastecimiento, combinando trabajo en planta y análisis de información "
+    "operacional. He desarrollado modelos predictivos para molienda SAG e "
+    "indicadores y automatizaciones que apoyan decisiones de procesos y gestión, "
+    "utilizando herramientas como Python, Power BI y SAP.\n\n"
+    "Me caracteriza la curiosidad por comprender cómo funcionan las cosas, "
+    "explorar nuevas soluciones y aprender continuamente. Asumo cada desafío "
+    "con iniciativa, rigurosidad y compromiso con los objetivos y resultados. "
+    "Creo en el potencial de la industria nacional y busco contribuir a su "
+    "desarrollo en entornos que me impulsen a mejorar y superarme cada día."
+)
+
 # Se respeta el nombre de cada empresa y la unidad mencionada en el CV fuente.
 # Dos aportes por experiencia, basados en actividades descritas por el titular.
 EXPERIENCIAS = [
@@ -77,8 +95,8 @@ EXPERIENCIAS = [
         "lugar": "Las Condes, Santiago",
         "fechas": "abr. – ago. 2026",
         "logros": [
-            "Integré información de SAP ERP y SAP Ariba con fuentes externas —SII, Banco Central e indicadores financieros— para analizar compras, contratos y proveedores con trazabilidad.",
-            "Desarrollé automatizaciones, reportes y tableros de indicadores para reducir tareas manuales y fortalecer el seguimiento de proveedores y el control de gestión.",
+            "Integré datos de SAP ERP y SAP Ariba con fuentes externas (SII, Banco Central e indicadores financieros) para analizar compras, contratos y proveedores con mayor trazabilidad.",
+            "Desarrollé automatizaciones y tableros de indicadores para disminuir tareas manuales y facilitar el seguimiento de proveedores y el control de gestión.",
         ],
     },
     {
@@ -88,8 +106,8 @@ EXPERIENCIAS = [
         "lugar": "Renca, Santiago",
         "fechas": "mar. – ago. 2026",
         "logros": [
-            "Analicé variables operacionales, equipos y condiciones de los procesos de elaboración y envasado para identificar brechas de desempeño y pérdidas de proceso.",
-            "Diseñé indicadores y tableros de control, apliqué análisis de causa raíz y automaticé reportes para apoyar iniciativas de mejora continua.",
+            "Analicé variables operacionales y condiciones de elaboración y envasado de bebidas para identificar pérdidas y brechas de desempeño en planta.",
+            "Desarrollé indicadores y tableros de control; combiné análisis de causa raíz y automatización de reportes para apoyar iniciativas de mejora continua.",
         ],
     },
     {
@@ -99,8 +117,8 @@ EXPERIENCIAS = [
         "lugar": "Salamanca, Chile",
         "fechas": "ene. – mar. 2026",
         "logros": [
-            "Analicé históricos del sistema DCS y variables de molienda SAG para estudiar estabilidad operacional, desempeño y consumo energético del circuito.",
-            "Contrasté tendencias de datos con condiciones de equipos y observaciones en faena, identificando patrones y desviaciones relevantes para la mejora del proceso.",
+            "Analicé datos históricos del DCS y variables de molienda SAG para evaluar estabilidad operacional, desempeño y consumo energético del circuito.",
+            "Contrasté tendencias de datos con observaciones en faena y condiciones de los equipos durante turnos 4x3 para identificar patrones y desviaciones operacionales.",
         ],
     },
     {
@@ -110,8 +128,8 @@ EXPERIENCIAS = [
         "lugar": "Modalidad remota",
         "fechas": "sept. – dic. 2025",
         "logros": [
-            "Recopilé, clasifiqué y estandaricé planos, fotografías e informes técnicos de operaciones, procesos, automatización, energía, calidad y abastecimiento.",
-            "Organicé documentación con criterios de trazabilidad y consulta para preservar conocimiento crítico y facilitar su transferencia a equipos de proyectos en Australia y China.",
+            "Clasifiqué y estandaricé documentación técnica de operaciones, procesos, automatización y otras áreas para facilitar su consulta y reutilización.",
+            "Organicé planos, informes y otros antecedentes con criterios de trazabilidad para preservar conocimiento y apoyar su transferencia a equipos de proyectos en Australia y China.",
         ],
     },
     {
@@ -121,8 +139,8 @@ EXPERIENCIAS = [
         "lugar": "Las Condes, Santiago",
         "fechas": "abr. – nov. 2025",
         "logros": [
-            "Construí y evalué modelos predictivos a partir de datos históricos de Minera Los Pelambres para estudiar capacidad de procesamiento y consumo específico de energía del circuito SAG.",
-            "Identifiqué variables críticas y escenarios operacionales con potencial de mejora, generando evidencia técnica para el análisis y la optimización del proceso.",
+            "Construí y evalué modelos predictivos con datos históricos de Minera Los Pelambres para analizar la capacidad de procesamiento y el consumo específico de energía en molienda SAG.",
+            "Identifiqué variables críticas y escenarios de operación con potencial de mejora, aportando antecedentes técnicos para apoyar decisiones de optimización.",
         ],
     },
     {
@@ -132,8 +150,8 @@ EXPERIENCIAS = [
         "lugar": "Concón, Chile",
         "fechas": "ene. – mar. 2025",
         "logros": [
-            "Analicé variables e históricos de refinación mediante AVEVA PI, complementando el estudio con interpretación de PFD y P&ID y visitas a planta.",
-            "Preparé análisis estadísticos, visualizaciones y reportes de tendencias e indicadores para apoyar el monitoreo operacional e identificar oportunidades de mejora.",
+            "Analicé datos históricos de procesos de refinación con AVEVA PI, integrando interpretación de PFD y P&ID y observaciones de planta.",
+            "Preparé análisis estadísticos, visualizaciones y reportes de tendencias para apoyar el monitoreo operacional y detectar oportunidades de mejora.",
         ],
     },
 ]
@@ -147,11 +165,10 @@ FORMACION = (
 # El resto se resume sin transmitir que todas las herramientas tienen el mismo
 # nivel de dominio. Se conserva el foco industrial del CV fuente.
 COMPETENCIAS = [
-    ("Competencias clave", "Python (pandas, scikit-learn), SQL, Power BI (Power Query y DAX), Microsoft Azure / Fabric, SAP ERP / Ariba y machine learning aplicado."),
-    ("Analítica y automatización", "Modelos predictivos, análisis estadístico, Excel avanzado, integración de datos y Power Automate."),
-    ("Ingeniería y operaciones", "Molienda SAG, eficiencia energética, Aspen Plus / HYSYS, JKSimMet / IES, PFD / P&ID y mejora continua."),
-    ("Sistemas industriales", "DCS, AVEVA PI System, visualización de tendencias, trazabilidad de datos y análisis de causa raíz."),
-    ("Herramientas complementarias", "R, Minitab, PySpark, Databricks, Data Factory, Power Apps, AutoCAD, Git / GitHub y BPMN."),
+    ("Herramientas clave", "Python (pandas, scikit-learn), Power BI (Power Query y DAX), SQL, Microsoft Azure / Fabric y SAP ERP / Ariba."),
+    ("Analítica aplicada", "Machine learning, modelos predictivos, análisis estadístico, automatización de reportes y visualización de indicadores."),
+    ("Ingeniería de procesos", "Molienda SAG, eficiencia energética, sistemas DCS y AVEVA PI, interpretación de PFD / P&ID y mejora continua."),
+    ("Herramientas complementarias", "Excel avanzado, Power Automate, Aspen Plus / HYSYS, JKSimMet / IES, Databricks y Git / GitHub."),
     ("Idiomas", "Español nativo · Inglés C1 Advanced (EF SET, jul. 2025)."),
 ]
 
@@ -205,20 +222,21 @@ def text_style(name, size, leading, color=INK, font="Helvetica",
         spaceAfter=after, leftIndent=indent, bulletIndent=bullet_indent,
         bulletFontName="Helvetica", bulletFontSize=8.5,
         allowWidows=0, allowOrphans=0, keepWithNext=keep,
+        justifyLastLine=0, justifyBreaks=0, splitLongWords=1,
     )
 
 
 STYLES = {
     "strap": text_style("strap", 9.0, 12.8, SECONDARY, "Helvetica-Bold", TA_CENTER, after=1),
     "contact": text_style("contact", 8.8, 12.8, INK, align=TA_CENTER),
-    "profile": text_style("profile", 10.05, 14.3, INK, after=0),
+    "profile": text_style("profile", 10.05, 14.3, INK, align=TA_JUSTIFY, after=5.5),
     "organization": text_style("organization", 10.55, 13.4, INK, keep=True),
     "dates": text_style("dates", 9.15, 13.4, NAVY, "Helvetica-Bold", TA_RIGHT),
     "role": text_style("role", 9.1, 12.0, SECONDARY, keep=True),
     "location": text_style("location", 8.6, 12.0, MUTED, align=TA_RIGHT),
-    "bullet": text_style("bullet", 9.7, 13.3, INK, indent=14, bullet_indent=2, after=3.2),
-    "body": text_style("body", 9.5, 13.1, INK, after=3.0),
-    "small": text_style("small", 9.25, 12.7, INK, after=3.0),
+    "bullet": text_style("bullet", 9.7, 13.3, INK, align=TA_JUSTIFY, indent=14, bullet_indent=2, after=3.2),
+    "body": text_style("body", 9.5, 13.1, INK, align=TA_LEFT, after=3.0),
+    "small": text_style("small", 9.25, 12.7, INK, align=TA_LEFT, after=3.0),
     "education": text_style("education", 9.9, 13.2, INK, "Helvetica-Bold"),
 }
 
@@ -280,6 +298,12 @@ class SectionHeading(Flowable):
 
 def par(text: str, style: str) -> Paragraph:
     return Paragraph(esc(text), STYLES[style])
+
+
+def bloques_perfil(text: str) -> list[str]:
+    """Párrafos editables sin perder los saltos de línea del usuario."""
+    normalized = text.strip().replace("\r\n", "\n").replace("\r", "\n")
+    return [" ".join(p.split()) for p in re.split(r"\n\s*\n", normalized) if p.strip()]
 
 
 def header() -> list:
@@ -347,9 +371,9 @@ def page_footer(canvas, doc):
 
 @st.cache_data(show_spinner=False)
 def generar_pdf(perfil: str) -> bytes:
-    """Genera el CV completo en A4 y con texto seleccionable."""
-    perfil = " ".join(perfil.split())
-    if not perfil:
+    """CV completo: perfil y logros justificados; listas legibles sin espacios forzados."""
+    paragraphs = bloques_perfil(perfil)
+    if not paragraphs:
         raise ValueError("El perfil profesional no puede estar vacío.")
     output = BytesIO()
     doc = BaseDocTemplate(
@@ -368,8 +392,8 @@ def generar_pdf(perfil: str) -> bytes:
 
     story = header()
     story.append(SectionHeading("Perfil profesional"))
-    story.append(par(perfil, "profile"))
-    story.append(Spacer(1, 7))
+    story.extend(par(p, "profile") for p in paragraphs)
+    story.append(Spacer(1, 2))
     story.append(SectionHeading("Experiencia profesional"))
     # Cuatro experiencias en la primera página; las otras dos y formación en la segunda.
     # Este salto consciente evita dejar una empresa cortada entre páginas.
@@ -419,7 +443,9 @@ APP_CSS = """
 .cv-rule {border: 0; border-top: 1px solid #718090; margin: 1.8rem 0 1.15rem;}
 .cv-section {text-align: center; font-size: .77rem; letter-spacing: .075em;
              color: #1A334F; font-weight: 750; margin: .7rem 0 .6rem;}
-.cv-profile {font-size: .97rem; line-height: 1.85; color: #2D3742; margin: .65rem 0 1.45rem;}
+.cv-profile {font-size: .97rem; line-height: 1.8; color: #2D3742;
+             text-align: justify; text-justify: inter-word; hyphens: auto; margin: .65rem 0 1.45rem;}
+.cv-profile p {margin: .65rem 0 .85rem;}
 .cv-detail {padding: .88rem 0; border-bottom: 1px solid #E9EDF1;}
 .cv-company {font-weight: 750; color: #1A334F; font-size: .94rem;}
 .cv-meta {font-size: .80rem; color: #647280; margin-top: .18rem;}
@@ -441,11 +467,11 @@ def main() -> None:
     st.markdown(APP_CSS, unsafe_allow_html=True)
     # Si la sesión tenía el perfil estándar anterior, incorpora esta revisión.
     # Un perfil editado manualmente por el usuario no se sobrescribe.
-    if st.session_state.get("_perfil_revision") != "curiosidad-industria-01":
-        actual = st.session_state.get("perfil_profesional", PERFIL_ANTERIOR)
-        if actual == PERFIL_ANTERIOR:
+    if st.session_state.get("_perfil_revision") != "industria-justificado-02":
+        actual = st.session_state.get("perfil_profesional", PERFIL_BASE_ANTERIOR)
+        if actual in (PERFIL_ANTERIOR, PERFIL_BASE_ANTERIOR):
             st.session_state["perfil_profesional"] = PERFIL_BASE
-        st.session_state["_perfil_revision"] = "curiosidad-industria-01"
+        st.session_state["_perfil_revision"] = "industria-justificado-02"
     st.session_state.setdefault("perfil_profesional", PERFIL_BASE)
     st.markdown(
         '<div class="cv-h1">ENRIQUE BRUN URRUTIA</div>'
@@ -455,9 +481,10 @@ def main() -> None:
     primary, details = st.tabs(["Principal", "Detalles"])
     with primary:
         profile = st.session_state["perfil_profesional"].strip()
+        preview = "".join(f"<p>{html.escape(p)}</p>" for p in bloques_perfil(profile))
         st.markdown(
             '<div class="cv-section">PERFIL PROFESIONAL</div><hr class="cv-rule">'
-            f'<div class="cv-profile">{html.escape(profile)}</div>',
+            f'<div class="cv-profile" lang="es">{preview}</div>',
             unsafe_allow_html=True,
         )
         if profile:
@@ -469,7 +496,7 @@ def main() -> None:
         else:
             st.info("Escribe el perfil profesional en la pestaña Detalles.")
     with details:
-        st.text_area("Perfil profesional", key="perfil_profesional", height=175, max_chars=3500)
+        st.text_area("Perfil profesional", key="perfil_profesional", height=220, max_chars=3500)
         st.markdown('<div class="cv-section">EXPERIENCIA PROFESIONAL</div><hr class="cv-rule">', unsafe_allow_html=True)
         for experience_item in EXPERIENCIAS:
             st.markdown(
