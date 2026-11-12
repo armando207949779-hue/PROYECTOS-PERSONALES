@@ -35,14 +35,16 @@ from reportlab.platypus import (
 PERSONA = {
     "nombre": "Enrique Brun Urrutia",
     "titulo": "Ingeniero Civil Químico",
-    "subtitulo": "Ingeniería de procesos  /  Analítica industrial  /  Optimización",
+    "subtitulo": "Ingeniería de Procesos  /  Analítica Industrial  /  Transformación Digital",
     "ciudad": "Santiago de Chile",
     "telefono": "+56 9 6359 6523",
     "correo": "enrique.brun@usm.cl",
     "linkedin": "linkedin.com/in/enrique-brun-248a02261/",
 }
 
-PERFIL_BASE = (
+# Perfil ejecutivo: aporta diferenciación técnica y motivación personal sin
+# prometer resultados no verificados ni recurrir a adjetivos grandilocuentes.
+PERFIL_ANTERIOR = (
     "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
     "con experiencia en minería, refinación, manufactura y abastecimiento. "
     "Integro ingeniería de procesos y analítica industrial para convertir datos "
@@ -50,6 +52,19 @@ PERFIL_BASE = (
     "de capacidad y consumo energético en molienda SAG y trabajado con Python, "
     "DCS, AVEVA PI, SAP y Power BI. Combino análisis de datos con trabajo en planta "
     "para identificar desviaciones y oportunidades de mejora operacional."
+)
+
+PERFIL_BASE = (
+    "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
+    "con experiencia en minería, energía, manufactura y abastecimiento. "
+    "Integro ingeniería de procesos, analítica de datos y automatización para "
+    "transformar información operacional en decisiones, desde modelos predictivos "
+    "para molienda SAG hasta indicadores y reportes de gestión. Me caracteriza la "
+    "curiosidad por comprender cómo funcionan los procesos, explorar nuevas "
+    "herramientas y aprender continuamente. Abordo cada desafío con iniciativa, "
+    "rigurosidad y compromiso con el cumplimiento de objetivos y la entrega de "
+    "resultados concretos. Creo en el potencial de la industria nacional y busco "
+    "desafíos exigentes para contribuir a su desarrollo y superarme cada día."
 )
 
 # Se respeta el nombre de cada empresa y la unidad mencionada en el CV fuente.
@@ -128,16 +143,15 @@ FORMACION = (
     "Ingeniería Civil Química · Casa Central, Valparaíso, Chile · 2020–2026",
 )
 
-# Se incluyen todas las familias de habilidades del PDF recibido.
+# Orden de lectura internacional: competencias nucleares primero.
+# El resto se resume sin transmitir que todas las herramientas tienen el mismo
+# nivel de dominio. Se conserva el foco industrial del CV fuente.
 COMPETENCIAS = [
-    ("Datos y machine learning", "Python (pandas, NumPy, scikit-learn), SQL, R, estadística aplicada, regresión y modelos predictivos."),
-    ("BI y automatización", "Power BI (Power Query, DAX, Service), Excel avanzado, Minitab, Power Automate y Power Apps."),
-    ("Cloud y datos", "Microsoft Azure, Microsoft Fabric, Databricks, Data Factory, Data Lake, Azure SQL, SQL Server, PySpark, ETL/ELT y APIs REST."),
-    ("Ingeniería de procesos", "Aspen Plus, Aspen HYSYS, JKSimMet, IES, AutoCAD, PFD y P&ID."),
-    ("Sistemas industriales", "AVEVA PI System, PI Data Archive, PI Vision y PI DataLink; DCS."),
-    ("Gestión y mejora", "Lean, Six Sigma, BPMN, análisis de causa raíz y optimización de procesos."),
-    ("ERP y abastecimiento", "SAP ERP y SAP Ariba; conocimientos de SAP MM y SAP S/4HANA."),
-    ("Desarrollo", "Git, GitHub y automatización de reportes y flujos de trabajo."),
+    ("Competencias clave", "Python (pandas, scikit-learn), SQL, Power BI (Power Query y DAX), Microsoft Azure / Fabric, SAP ERP / Ariba y machine learning aplicado."),
+    ("Analítica y automatización", "Modelos predictivos, análisis estadístico, Excel avanzado, integración de datos y Power Automate."),
+    ("Ingeniería y operaciones", "Molienda SAG, eficiencia energética, Aspen Plus / HYSYS, JKSimMet / IES, PFD / P&ID y mejora continua."),
+    ("Sistemas industriales", "DCS, AVEVA PI System, visualización de tendencias, trazabilidad de datos y análisis de causa raíz."),
+    ("Herramientas complementarias", "R, Minitab, PySpark, Databricks, Data Factory, Power Apps, AutoCAD, Git / GitHub y BPMN."),
     ("Idiomas", "Español nativo · Inglés C1 Advanced (EF SET, jul. 2025)."),
 ]
 
@@ -197,15 +211,15 @@ def text_style(name, size, leading, color=INK, font="Helvetica",
 STYLES = {
     "strap": text_style("strap", 9.0, 12.8, SECONDARY, "Helvetica-Bold", TA_CENTER, after=1),
     "contact": text_style("contact", 8.8, 12.8, INK, align=TA_CENTER),
-    "profile": text_style("profile", 9.55, 13.5, INK, after=0),
-    "organization": text_style("organization", 10.2, 12.9, INK, keep=True),
-    "dates": text_style("dates", 9.0, 12.9, NAVY, "Helvetica-Bold", TA_RIGHT),
-    "role": text_style("role", 8.75, 11.5, SECONDARY, keep=True),
-    "location": text_style("location", 8.4, 11.5, MUTED, align=TA_RIGHT),
-    "bullet": text_style("bullet", 9.25, 12.6, INK, indent=14, bullet_indent=2, after=2.4),
-    "body": text_style("body", 9.2, 12.5, INK, after=2.8),
-    "small": text_style("small", 8.85, 12.0, INK, after=2.5),
-    "education": text_style("education", 9.65, 12.8, INK, "Helvetica-Bold"),
+    "profile": text_style("profile", 10.05, 14.3, INK, after=0),
+    "organization": text_style("organization", 10.55, 13.4, INK, keep=True),
+    "dates": text_style("dates", 9.15, 13.4, NAVY, "Helvetica-Bold", TA_RIGHT),
+    "role": text_style("role", 9.1, 12.0, SECONDARY, keep=True),
+    "location": text_style("location", 8.6, 12.0, MUTED, align=TA_RIGHT),
+    "bullet": text_style("bullet", 9.7, 13.3, INK, indent=14, bullet_indent=2, after=3.2),
+    "body": text_style("body", 9.5, 13.1, INK, after=3.0),
+    "small": text_style("small", 9.25, 12.7, INK, after=3.0),
+    "education": text_style("education", 9.9, 13.2, INK, "Helvetica-Bold"),
 }
 
 
@@ -308,7 +322,7 @@ def experience(item: dict) -> KeepTogether:
     content = [paired_heading(employer, date, role, location), Spacer(1, 3.8)]
     for achievement in item["logros"]:
         content.append(Paragraph(esc(achievement), STYLES["bullet"], bulletText="•"))
-    content.append(Spacer(1, 9.5))
+    content.append(Spacer(1, 11.5))
     return KeepTogether(content)
 
 
@@ -333,7 +347,7 @@ def page_footer(canvas, doc):
 
 @st.cache_data(show_spinner=False)
 def generar_pdf(perfil: str) -> bytes:
-    """Genera el CV completo, en 2 páginas A4, con texto seleccionable."""
+    """Genera el CV completo en A4 y con texto seleccionable."""
     perfil = " ".join(perfil.split())
     if not perfil:
         raise ValueError("El perfil profesional no puede estar vacío.")
@@ -425,10 +439,17 @@ button[data-baseweb="tab"] {font-weight: 600;}
 def main() -> None:
     st.set_page_config(page_title="CV | Enrique Brun Urrutia", layout="centered")
     st.markdown(APP_CSS, unsafe_allow_html=True)
+    # Si la sesión tenía el perfil estándar anterior, incorpora esta revisión.
+    # Un perfil editado manualmente por el usuario no se sobrescribe.
+    if st.session_state.get("_perfil_revision") != "curiosidad-industria-01":
+        actual = st.session_state.get("perfil_profesional", PERFIL_ANTERIOR)
+        if actual == PERFIL_ANTERIOR:
+            st.session_state["perfil_profesional"] = PERFIL_BASE
+        st.session_state["_perfil_revision"] = "curiosidad-industria-01"
     st.session_state.setdefault("perfil_profesional", PERFIL_BASE)
     st.markdown(
         '<div class="cv-h1">ENRIQUE BRUN URRUTIA</div>'
-        '<div class="cv-sub">Ingeniería de Procesos &nbsp;·&nbsp; Analítica Industrial</div>',
+        '<div class="cv-sub">Ingeniería de Procesos &nbsp;·&nbsp; Analítica Industrial &nbsp;·&nbsp; Optimización</div>',
         unsafe_allow_html=True,
     )
     primary, details = st.tabs(["Principal", "Detalles"])
@@ -457,7 +478,7 @@ def main() -> None:
                 f'<div class="cv-meta">{html.escape(experience_item["area"])} · {html.escape(experience_item["fechas"])}</div>'
                 '</div>', unsafe_allow_html=True,
             )
-        st.caption("El PDF incluye las 6 experiencias, educación, competencias, certificaciones y docencia.")
+        st.caption("El PDF completo incluye las seis experiencias, educación, competencias prioritarias, certificaciones y docencia.")
 
 
 if __name__ == "__main__":
