@@ -1,37 +1,30 @@
-"""CV personal de Enrique Brun Urrutia para GitHub + Streamlit.
+"""CV moderno azul marino: Streamlit + ReportLab.
 
-Reemplaza únicamente app.py. Mantiene las dependencias de la versión anterior:
-streamlit y reportlab. No necesita el PDF original ni archivos adicionales.
+Reemplaza app.py en GitHub/Streamlit. Requiere únicamente streamlit y reportlab.
+Los datos originales se conservan. El PDF se descarga desde un único botón.
 """
-
 from __future__ import annotations
 
-import hashlib
-import html
-import json
 import base64
+import html
 import re
 import unicodedata
-import zipfile
 import zlib
-from datetime import datetime
 from io import BytesIO
-from uuid import uuid4
 from xml.sax.saxutils import escape
-from zoneinfo import ZoneInfo
 
 import streamlit as st
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_JUSTIFY, TA_LEFT, TA_RIGHT
+from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    Flowable, HRFlowable, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle,
+    Flowable, HRFlowable, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate,
+    Spacer, Table, TableStyle,
 )
-
 
 # DATOS FIJOS: antecedentes del CV y ubicaciones confirmadas por Enrique.
 # Cada experiencia resume dos aportes relevantes para minería y gran industria.
@@ -47,12 +40,12 @@ PERSONA = {
 }
 
 PERFIL_BASE = (
-    "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, "
-    "enfocado en la optimización de procesos industriales mediante analítica de "
-    "datos, automatización y machine learning. Experiencia en minería, energía, "
-    "manufactura y abastecimiento, combinando trabajo en planta y entornos "
-    "corporativos. Desarrollo de modelos predictivos, indicadores y soluciones "
-    "de análisis para apoyar la eficiencia operacional y la toma de decisiones."
+    "Ingeniero Civil Químico de la Universidad Técnica Federico Santa María, con experiencia "
+    "en minería, refinación, manufactura y abastecimiento. Integro datos industriales "
+    "(DCS, AVEVA PI) y herramientas de analítica para desarrollar modelos predictivos, "
+    "automatizar indicadores y detectar oportunidades de mejora. Proyecto de título "
+    "centrado en capacidad de procesamiento y consumo específico de energía del "
+    "circuito de molienda SAG."
 )
 
 EXPERIENCIAS = [
@@ -160,57 +153,72 @@ ACTIVIDADES = (
     "CETAM - participación en Expedición Científica Andes."
 )
 
-PDF_FILENAME = "CV_ENRIQUE_BRUN_INGENIERO_CIVIL_QUIMICO_UTFSM.pdf"
-LETTER_FILENAME = "CARTA_PRESENTACION_ENRIQUE_BRUN.pdf"
-TIMEZONE = ZoneInfo("America/Santiago")
-DEFAULT_JOB = "Ingeniero de Procesos"
-DEFAULT_COMPANY = "Empresa objetivo"
-DESIGN_VERSION = "letter-natural-07"
-PROFILE_VERSION = "industrial-final-06"
-LETTER_VERSION = "natural-01"
-# El marco de SimpleDocTemplate añade 6 pt de relleno a cada lado.
-# Descontarlos mantiene encabezado, fechas y texto perfectamente alineados.
-DOCUMENT_WIDTH = A4[0] - 28 * mm - 12
+PDF_FILENAME_EXEC = "CV_ENRIQUE_BRUN_EJECUTIVO.pdf"
+PDF_FILENAME_FULL = "CV_ENRIQUE_BRUN_COMPLETO.pdf"
+NAVY = colors.HexColor("#122C45")
+BLUE = colors.HexColor("#306184")
+TEXT = colors.HexColor("#263747")
+SECONDARY = colors.HexColor("#52667B")
+HAIRLINE = colors.HexColor("#DEE5EB")
+DOCUMENT_WIDTH = A4[0] - 34 * mm - 12
 
+# Estos resúmenes solo sintetizan los antecedentes originales; no añaden resultados ficticios.
+EXPERIENCIA_EJECUTIVA = [
+    ("ENAEX S.A.", "Analítica y automatización · Abastecimiento", [
+        "Integré información de SAP ERP y SAP Ariba para el análisis de compras, contratos y proveedores.",
+        "Automaticé reportes y desarrollé tableros de indicadores para el seguimiento y control de gestión." ]),
+    ("CCU · Planta Modelo Renca", "Mejora de procesos · Operaciones", [
+        "Desarrollé indicadores de desempeño y analicé pérdidas en los procesos de elaboración y envasado." ]),
+    ("Minera Los Pelambres", "Ingeniería de Procesos · Planta concentradora", [
+        "Analicé históricos DCS del circuito de molienda SAG y contrasté desviaciones con condiciones en terreno (turno 4x3)." ]),
+    ("SQM · International Lithium", "Gestión del conocimiento · Proyectos de litio", [
+        "Estandaricé documentación técnica y criterios de trazabilidad para proyectos en Australia y China." ]),
+    ("Antofagasta Minerals", "Proyecto de título · Optimización con Machine Learning", [
+        "Construí modelos predictivos de procesamiento y consumo específico de energía del circuito SAG.",
+        "Identifiqué variables críticas y escenarios con potencial de mejora operacional." ]),
+    ("ENAP · Refinería Aconcagua", "Ingeniería de Procesos · Refinación", [
+        "Analicé históricos AVEVA PI, PFD y P&ID y elaboré reportes para monitorear indicadores operacionales." ]),
+]
 
 CSS = """
 <style>
-.stApp { background: #fff; color: #111; }
-.block-container { max-width: 1280px; padding-top: 2rem; }
-h1, h2, h3 { letter-spacing: -.03em; }
-.cv-paper { font-family: Helvetica, Arial, sans-serif; color: #111;
-    background: #fff; font-size: 12px; line-height: 1.55; padding: 12px 8px;
-    overflow-wrap: break-word; }
-.cv-paper .masthead { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
-.cv-paper .identity { flex: 1; }
-.cv-paper .name { font-size: 27px; line-height: 1.15; font-weight: 700; letter-spacing: -.7px; }
-.cv-paper .title { font-size: 10px; font-weight: 700; letter-spacing: .9px; margin-top: 9px; text-transform: uppercase; }
-.cv-paper .specialty { font-size: 11px; margin-top: 4px; }
-.cv-paper .contact { font-size: 10px; line-height: 1.85; text-align: right; }
-.cv-paper a { color: #111 !important; text-decoration: none; }
-.cv-paper a.linkedin { border-bottom: 1px solid #777; padding-bottom: 1px; }
-.cv-paper hr { border: 0; border-top: 1.3px solid #111; margin: 18px 0 6px; }
-.cv-paper h2 { display: flex; align-items: center; gap: 12px; font-size: 11px;
-    font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase;
-    margin: 21px 0 10px; color: #111; white-space: nowrap; }
-.cv-paper h2::after { content: ''; flex: 1; height: 1px; background: #bbb; }
-.cv-paper h3 { font-size: 12px; font-weight: 700; margin: 16px 0 3px; letter-spacing: 0; }
-.cv-paper p { font-size: 12px; margin: 0 0 8px; text-align: justify; }
-.cv-paper .meta { display: flex; justify-content: space-between; gap: 10px;
-    font-size: 10px; margin: 3px 0 7px; }
-.cv-paper ul { margin: 4px 0 12px; padding-left: 16px; }
-.cv-paper li { margin-bottom: 4px; text-align: left; }
-.cv-paper .small p { font-size: 11px; margin-bottom: 6px; }
-.cv-paper .compact-entry { margin: 12px 0 3px; }
-.cv-paper .compact-role { display: flex; justify-content: space-between; gap: 12px;
-    font-size: 10px; margin-bottom: 5px; }
-.cv-paper .other p { text-align: left; font-size: 11px; }
-@media (max-width: 650px) {
- .cv-paper .masthead { display: block; }
- .cv-paper .contact { text-align: left; margin-top: 12px; }
- .cv-paper .name { font-size: 25px; }
- .cv-paper h2 { white-space: normal; font-size: 10px; }
-}
+.stApp {background:#F7F9FC; color:#122C45}
+.block-container {max-width:1050px; padding-top:1.7rem; padding-bottom:3rem}
+[data-testid="stHeader"] {background:transparent}
+.stApp h1,.stApp h2,.stApp h3 {letter-spacing:-.035em}
+[data-testid="stTabs"] [data-baseweb="tab-list"] {gap:1.4rem; border-bottom:1px solid #E1E8EE}
+[data-testid="stTabs"] button[role="tab"] {font-weight:650}
+[data-testid="stDownloadButton"] button {background:#122C45!important;color:white!important;
+  border:1px solid #122C45!important;border-radius:8px!important; min-height:3.1rem;
+  font-weight:700;box-shadow:none!important}
+[data-testid="stDownloadButton"] button:hover {background:#306184!important}
+[data-testid="stTextArea"] textarea {background:white;border-radius:8px;line-height:1.5}
+.cv-paper {background:white; color:#263747; font-family:Arial,Helvetica,sans-serif;
+  line-height:1.48; font-size:12px; padding:30px 35px 35px;}
+.cv-paper .eyebrow {color:#306184;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.cv-paper .name {font-size:33px;letter-spacing:-1.3px;font-weight:800;color:#122C45;line-height:1.1;margin:9px 0 7px}
+.cv-paper .subtitle {font-size:11px;color:#306184;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.cv-paper .contact {font-size:10.6px;line-height:1.65;color:#52667B;margin:12px 0 17px;overflow-wrap:anywhere}
+.cv-paper .contact a {color:#52667B;text-decoration:none}
+.cv-paper .rule {border-top:2px solid #122C45;position:relative;margin-bottom:18px}
+.cv-paper .rule::before{content:'';width:48px;background:#306184;height:3px;position:absolute;top:-2px;left:0}
+.cv-paper h2 {font-size:11px;color:#122C45;letter-spacing:1.5px;text-transform:uppercase;
+  font-weight:800;border-bottom:1px solid #DEE5EB;padding-bottom:7px;margin:21px 0 11px}
+.cv-paper p {font-size:12px;margin:0 0 8px}
+.cv-paper .entry {margin:13px 0 0}
+.cv-paper .row-head {display:flex;justify-content:space-between;gap:18px;align-items:baseline}
+.cv-paper .company {font-size:12px;font-weight:760;color:#122C45}
+.cv-paper .date {font-size:10px;color:#65798A;white-space:nowrap}
+.cv-paper .role {font-size:11px;color:#306184;margin:2px 0 4px}
+.cv-paper .place {font-size:10px;color:#65798A}
+.cv-paper ul {margin:4px 0 7px;padding-left:17px}
+.cv-paper li {font-size:11.5px;margin:3px 0}
+.cv-paper li::marker {color:#306184}
+.cv-paper .skill-row {font-size:11px;margin:4px 0}
+.cv-paper .skill-row strong {color:#122C45}
+.cv-paper .small {font-size:11px;color:#263747}
+@media(max-width:650px){.cv-paper{padding:20px}.cv-paper .name{font-size:27px}
+ .cv-paper .row-head{display:block}.cv-paper .date{display:block;margin:2px 0}}
 </style>
 """
 
@@ -224,13 +232,11 @@ def clean(value: str) -> str:
 
 
 def register_fonts() -> None:
-    """Fuentes incrustadas en este app.py; no requiere archivos ni descargas."""
     for name, encoded in EMBEDDED_FONTS.items():
         if name not in pdfmetrics.getRegisteredFontNames():
             font_data = zlib.decompress(base64.b64decode(encoded))
             pdfmetrics.registerFont(TTFont(name, BytesIO(font_data)))
-    pdfmetrics.registerFontFamily("CVSans", normal="CVSans", bold="CVSansBold",
-                                 italic="CVSans", boldItalic="CVSansBold")
+    pdfmetrics.registerFontFamily("CVSans",normal="CVSans",bold="CVSansBold",italic="CVSans",boldItalic="CVSansBold")
 
 
 def validate_text(value: str) -> str:
@@ -239,471 +245,290 @@ def validate_text(value: str) -> str:
     glyphs = pdfmetrics.getFont("CVSans").face.charToGlyph
     missing = sorted({c for c in value if not c.isspace() and ord(c) not in glyphs})
     if missing:
-        raise ValueError("La fuente no incluye estos caracteres: " + " ".join(missing[:8])
-                         + ". Reemplázalos por texto simple antes de generar el PDF.")
+        raise ValueError("La fuente no incluye los caracteres: " + " ".join(missing[:8]))
     return value
 
 
 def blocks(value: str) -> list[str]:
-    return [part.strip() for part in re.split(r"\n\s*\n", clean(value)) if part.strip()]
+    return [piece.strip() for piece in re.split(r"\n\s*\n",clean(value)) if piece.strip()]
 
 
-def pdf_styles() -> dict:
+def pdf_styles(mode: str) -> dict:
     register_fonts()
-    body = ParagraphStyle(
-        "body", fontName="CVSans", fontSize=9.7, leading=12.5,
-        textColor=colors.black, spaceAfter=4, splitLongWords=True,
-        alignment=TA_JUSTIFY, justifyLastLine=0, justifyBreaks=0,
-    )
+    executive = mode == "Ejecutivo"
+    body = ParagraphStyle("body",fontName="CVSans",fontSize=(9.55 if executive else 9.7),
+                          leading=(12.6 if executive else 13.4),textColor=TEXT,spaceAfter=3)
     return {
-        "body": body,
-        "name": ParagraphStyle("name", parent=body, fontName="CVSansBold", fontSize=24, leading=27, spaceAfter=7, alignment=TA_LEFT),
-        "title": ParagraphStyle("title", parent=body, fontName="CVSansBold", fontSize=9.2, leading=12, spaceAfter=3, alignment=TA_LEFT),
-        "specialty": ParagraphStyle("specialty", parent=body, fontSize=9.2, leading=12, spaceAfter=0, alignment=TA_LEFT),
-        "contact": ParagraphStyle("contact", parent=body, fontSize=8.5, leading=12.3, spaceAfter=0, alignment=TA_RIGHT),
-        "section": ParagraphStyle("section", parent=body, fontName="CVSansBold", fontSize=9.3, leading=11.5, spaceBefore=8, spaceAfter=4, keepWithNext=True),
-        "company": ParagraphStyle("company", parent=body, fontName="CVSansBold", fontSize=9.7, leading=11.5, spaceBefore=3, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
-        "role": ParagraphStyle("role", parent=body, fontSize=9, leading=11, spaceAfter=1, keepWithNext=True, alignment=TA_LEFT),
-        "meta": ParagraphStyle("meta", parent=body, fontSize=8.2, leading=10, spaceAfter=0, keepWithNext=True, alignment=TA_LEFT),
-        "meta_right": ParagraphStyle("meta_right", parent=body, fontSize=8.2, leading=10, spaceAfter=0, alignment=TA_RIGHT),
-        "bullet": ParagraphStyle("bullet", parent=body, fontSize=9.7, leading=12.5, leftIndent=9, bulletIndent=0, bulletFontName="CVSans", bulletFontSize=8, spaceAfter=3, alignment=TA_LEFT),
-        "small": ParagraphStyle("small", parent=body, fontSize=9.1, leading=11.8, spaceAfter=3, alignment=TA_LEFT),
-        "date": ParagraphStyle("date", parent=body, alignment=2, spaceAfter=22),
-        "letter": ParagraphStyle("letter", parent=body, fontSize=10.5, leading=16, spaceAfter=11),
+        "body":body,
+        "name":ParagraphStyle("name",parent=body,fontName="CVSansBold",fontSize=24.2,
+                              leading=27.5,textColor=NAVY,spaceAfter=4),
+        "eyebrow":ParagraphStyle("eyebrow",parent=body,fontName="CVSansBold",fontSize=8.4,
+                              leading=10.5,textColor=BLUE,spaceAfter=5),
+        "subtitle":ParagraphStyle("subtitle",parent=body,fontName="CVSansBold",fontSize=9.8,
+                              leading=12,textColor=BLUE,spaceAfter=7),
+        "contact":ParagraphStyle("contact",parent=body,fontSize=8.35,leading=11.7,
+                               textColor=SECONDARY,spaceAfter=2),
+        "summary":ParagraphStyle("summary",parent=body,fontSize=(9.55 if executive else 9.8),
+                               leading=(13.4 if executive else 13.9),spaceAfter=7),
+        "company":ParagraphStyle("company",parent=body,fontName="CVSansBold",fontSize=(9.8 if executive else 10.05),
+                               leading=12.4,textColor=NAVY,spaceAfter=1,keepWithNext=True),
+        "role":ParagraphStyle("role",parent=body,fontSize=(8.75 if executive else 9.0),
+                               leading=11.4,textColor=BLUE,spaceAfter=2,keepWithNext=True),
+        "meta":ParagraphStyle("meta",parent=body,fontSize=8.2,leading=10.8,
+                               textColor=SECONDARY,spaceAfter=3,keepWithNext=True),
+        "bullet":ParagraphStyle("bullet",parent=body,fontSize=(9.1 if executive else 9.45),
+                               leading=(12.0 if executive else 12.9),leftIndent=11,
+                               bulletIndent=1,bulletFontName="CVSans",bulletFontSize=7,
+                               bulletColor=BLUE,spaceAfter=(2 if executive else 3)),
+        "skill":ParagraphStyle("skill",parent=body,fontSize=(9.0 if executive else 9.4),
+                               leading=(12.0 if executive else 13.1),spaceAfter=(3 if executive else 5)),
+        "small":ParagraphStyle("small",parent=body,fontSize=(8.8 if executive else 9.2),
+                               leading=(11.6 if executive else 12.8),spaceAfter=4),
     }
 
 
 class SectionHeading(Flowable):
-    """Título destacado con una línea fina: sección legible sin recuadros."""
-
-    def __init__(self, title: str):
+    def __init__(self, title: str, compact=False):
         super().__init__()
-        self.title = title.upper()
-        self.height = 21
-        self.keepWithNext = True
-
-    def wrap(self, available_width, available_height):
-        self.width = available_width
-        return self.width, self.height
-
+        self.title=title.upper()
+        self.height=20 if compact else 24
+        self.keepWithNext=True
+    def wrap(self,w,h):
+        self.width=w
+        return w,self.height
     def draw(self):
         self.canv.saveState()
-        self.canv.setFillColor(colors.black)
-        text = self.canv.beginText(0, 5)
-        text.setFont("CVSansBold", 9.8)
-        text.setCharSpace(.85)
-        text.textOut(self.title)
-        self.canv.drawText(text)
-        label_width = pdfmetrics.stringWidth(self.title, "CVSansBold", 9.8) + .85 * (len(self.title) - 1)
-        if label_width + 18 < self.width:
-            self.canv.setStrokeColor(colors.HexColor("#B8B8B8"))
-            self.canv.setLineWidth(.5)
-            self.canv.line(label_width + 13, 8, self.width, 8)
+        txt=self.canv.beginText(0,7)
+        txt.setFont("CVSansBold",8.65)
+        txt.setCharSpace(.85)
+        txt.setFillColor(NAVY)
+        txt.textOut(self.title)
+        self.canv.drawText(txt)
+        line_start=pdfmetrics.stringWidth(self.title,"CVSansBold",8.65)+.85*(len(self.title)-1)+13
+        self.canv.setStrokeColor(HAIRLINE)
+        self.canv.setLineWidth(.75)
+        if line_start<self.width:
+            self.canv.line(line_start,10,self.width,10)
         self.canv.restoreState()
 
 
-def table_style() -> TableStyle:
-    return TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        ("TOPPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-    ])
+def header(story: list,styles: dict,executive: bool) -> None:
+    e=escape
+    story.append(Paragraph("INGENIERÍA / PROCESOS / DATOS", styles["eyebrow"]))
+    story.append(Paragraph(e(PERSONA["nombre"]),styles["name"]))
+    story.append(Paragraph(e(PERSONA["titulo"] + "  |  Ingeniería de Procesos y Analítica Industrial"),styles["subtitle"]))
+    phone="tel:"+re.sub(r"[^+0-9]","",PERSONA["telefono"])
+    contact=(f'{e(PERSONA["ciudad"])}  |  <link href="{phone}" color="#52667B">{e(PERSONA["telefono"])}</link>'
+             f'  |  <link href="mailto:{e(PERSONA["correo"])}" color="#52667B">{e(PERSONA["correo"])}</link>')
+    story.append(Paragraph(contact,styles["contact"]))
+    linkedin="https://"+PERSONA["linkedin"]
+    story.append(Paragraph(f'<link href="{linkedin}" color="#52667B">{e(PERSONA["linkedin"].rstrip("/"))}</link>',styles["contact"]))
+    story.append(Spacer(1,8 if executive else 11))
+    story.append(HRFlowable(width="100%",thickness=1.2,color=NAVY,spaceAfter=6))
 
 
-def header(story: list, styles: dict) -> None:
-    identity = [
-        Paragraph(escape(PERSONA["nombre"]), styles["name"]),
-        Paragraph(escape(PERSONA["titulo"].upper() + " · UTFSM"), styles["title"]),
-        Paragraph(escape(PERSONA["especialidad"]), styles["specialty"]),
-    ]
-    phone_url = "tel:" + re.sub(r"[^+0-9]", "", PERSONA["telefono"])
-    linkedin_url = "https://" + PERSONA["linkedin"]
-    contact = [
-        Paragraph(escape(PERSONA["ciudad"]), styles["contact"]),
-        Paragraph(f'<link href="{phone_url}" color="#111111">{escape(PERSONA["telefono"])}</link>', styles["contact"]),
-        Paragraph(f'<link href="mailto:{PERSONA["correo"]}" color="#111111">{escape(PERSONA["correo"])}</link>', styles["contact"]),
-        Paragraph(f'<link href="{linkedin_url}" color="#111111"><u>LinkedIn / Enrique Brun</u></link>', styles["contact"]),
-    ]
-    masthead = Table([[identity, contact]], colWidths=[DOCUMENT_WIDTH * .64, DOCUMENT_WIDTH * .36], style=table_style())
-    story.extend([
-        masthead, Spacer(1, 10),
-        HRFlowable(width="100%", thickness=.8, color=colors.black), Spacer(1, 3),
-    ])
-
-
-def page_decoration(canvas, doc) -> None:
+def page_decoration(canvas, doc):
     canvas.saveState()
-    canvas.setFillColor(colors.black)
-    if doc.page > 1:
-        canvas.setFont("CVSansBold", 8)
-        canvas.drawString(doc.leftMargin + 6, A4[1] - 12 * mm, PERSONA["nombre"])
-        canvas.setFont("CVSans", 8)
-        canvas.drawRightString(A4[0] - doc.rightMargin - 6, A4[1] - 12 * mm, PERSONA["titulo"])
-        canvas.setLineWidth(.3)
-        canvas.line(doc.leftMargin + 6, A4[1] - 14 * mm, A4[0] - doc.rightMargin - 6, A4[1] - 14 * mm)
-    canvas.setFont("CVSans", 8)
-    canvas.drawRightString(A4[0] - doc.rightMargin, 9 * mm, str(doc.page))
+    if doc.page>1:
+        canvas.setFont("CVSansBold",8)
+        canvas.setFillColor(NAVY)
+        canvas.drawString(doc.leftMargin+6,A4[1]-12.2*mm,PERSONA["nombre"])
+        canvas.setStrokeColor(HAIRLINE)
+        canvas.setLineWidth(.55)
+        canvas.line(doc.leftMargin+6,A4[1]-14.6*mm,A4[0]-doc.rightMargin-6,A4[1]-14.6*mm)
+    canvas.setStrokeColor(HAIRLINE)
+    canvas.line(doc.leftMargin+6,12.5*mm,A4[0]-doc.rightMargin-6,12.5*mm)
+    canvas.setFont("CVSans",7.7)
+    canvas.setFillColor(SECONDARY)
+    canvas.drawString(doc.leftMargin+6,9.4*mm,"ENRIQUE BRUN  /  INGENIERÍA CIVIL QUÍMICA")
+    canvas.drawRightString(A4[0]-doc.rightMargin-6,9.4*mm,str(doc.page))
     canvas.restoreState()
 
 
-def build_document(story: list, title: str) -> bytes:
-    output = BytesIO()
-    document = SimpleDocTemplate(
-        output, pagesize=A4, leftMargin=14 * mm, rightMargin=14 * mm,
-        topMargin=18 * mm, bottomMargin=13 * mm,
-        title=title, author=PERSONA["nombre"], subject="Postulación profesional",
-    )
-    document.build(story, onFirstPage=page_decoration, onLaterPages=page_decoration)
+def build_document(story: list,title: str) -> bytes:
+    output=BytesIO()
+    doc=SimpleDocTemplate(output,pagesize=A4,leftMargin=17*mm,rightMargin=17*mm,
+                          topMargin=17*mm,bottomMargin=17*mm,
+                          title=title,author=PERSONA["nombre"],subject="Currículum profesional")
+    doc.build(story,onFirstPage=page_decoration,onLaterPages=page_decoration)
     return output.getvalue()
 
 
-def generate_cv(profile: str) -> bytes:
-    profile = validate_text(profile)
+def small_paragraph(text,styles,bold_label=None):
+    if bold_label:
+        return Paragraph(f'<b>{escape(bold_label)}</b>  {escape(text)}',styles["skill"])
+    return Paragraph(escape(text),styles["small"])
+
+
+def entry_full(item: dict,styles: dict) -> list:
+    date=item["fechas"].split(" (")[0]
+    content=[
+       Paragraph(escape(item["empresa"]),styles["company"]),
+       Paragraph(escape(item["cargo"]),styles["role"]),
+       Paragraph(escape(item["lugar"]+"  |  "+date),styles["meta"]),
+    ]
+    content += [Paragraph(escape(b),styles["bullet"],bulletText="•") for b in item["logros"]]
+    return content
+
+
+def entry_executive(index: int,styles: dict) -> list:
+    company,role,achievements=EXPERIENCIA_EJECUTIVA[index]
+    date=EXPERIENCIAS[index]["fechas"].split(" (")[0]
+    content=[
+        Paragraph(escape(company+"  |  "+date),styles["company"]),
+        Paragraph(escape(role),styles["role"]),
+    ]
+    content += [Paragraph(escape(b),styles["bullet"],bulletText="•") for b in achievements]
+    return content
+
+
+def generate_cv(profile: str,mode="Ejecutivo") -> bytes:
+    profile=validate_text(profile)
     if not profile:
-        raise ValueError("Escribe tu perfil profesional antes de generar el CV.")
-    styles = pdf_styles()
-    story = []
-    header(story, styles)
-    story.append(SectionHeading("Perfil profesional"))
+        raise ValueError("Completa tu perfil profesional en Detalles.")
+    if mode not in {"Ejecutivo","Completo"}:
+        raise ValueError("Formato desconocido")
+    executive=mode=="Ejecutivo"
+    styles=pdf_styles(mode)
+    story=[]
+    header(story,styles,executive)
+    story.append(SectionHeading("Perfil profesional",compact=executive))
     for paragraph in blocks(profile):
-        story.append(Paragraph(escape(paragraph).replace("\n", "<br/>"), styles["body"]))
-    story.append(SectionHeading("Experiencia profesional"))
-    for item in EXPERIENCIAS:
-        metadata = Table([[
-            Paragraph(escape(item["lugar"]), styles["meta"]),
-            Paragraph(escape(item["fechas"]), styles["meta_right"]),
-        ]], colWidths=[DOCUMENT_WIDTH * .64, DOCUMENT_WIDTH * .36], style=table_style())
-        metadata.spaceAfter = 4
-        entry = [
-            Paragraph(escape(item["empresa"]), styles["company"]),
-            Paragraph(escape(item["cargo"]), styles["role"]),
-            metadata,
-        ]
-        for achievement in item["logros"]:
-            entry.append(Paragraph(escape(achievement), styles["bullet"], bulletText="-"))
-        # Conserva cada experiencia unida y deja que la paginación sea natural.
-        story.append(KeepTogether(entry))
-        story.append(Spacer(1, 4))
-    story.append(SectionHeading("Educación"))
-    story.append(Paragraph(escape(EDUCACION[0]), styles["company"]))
-    story.append(Paragraph(escape(EDUCACION[1]), styles["body"]))
-    story.append(SectionHeading("Competencias técnicas e idiomas"))
-    for title, description in COMPETENCIAS:
-        story.append(Paragraph(f"<b>{escape(title)}:</b> {escape(description)}", styles["small"]))
-    story.append(SectionHeading("Habilidades profesionales"))
-    story.append(Paragraph(escape(HABILIDADES), styles["small"]))
-    story.append(SectionHeading("Certificaciones"))
-    for certification in CERTIFICACIONES:
-        story.append(Paragraph(escape(certification), styles["small"]))
-    story.append(SectionHeading("Docencia y actividades"))
-    for title, description in DOCENCIA:
-        story.append(KeepTogether([
-            Paragraph(f"<b>{escape(title)}</b>", styles["small"]),
-            Paragraph(escape(description), styles["small"]),
-        ]))
-    story.append(Paragraph(f"<b>Actividades:</b> {escape(ACTIVIDADES)}", styles["small"]))
-    return build_document(story, "Enrique Brun Urrutia | Ingeniero Civil Químico | UTFSM")
-
-
-def company_is_specific(company: str) -> bool:
-    return clean(company).casefold() not in {"", DEFAULT_COMPANY.casefold(), "empresa", "nombre de la empresa"}
-
-
-def letter_template(job: str = "", company: str = "", personalized: bool = False) -> str:
-    """La versión genérica es reutilizable y no contiene nombres pendientes."""
-    opening = "Me interesa la posibilidad de aportar a su equipo y seguir desarrollándome profesionalmente."
-    if personalized and clean(job):
-        destination = " en " + clean(company) if company_is_specific(company) else ""
-        opening = f"Me interesa postular al cargo de {clean(job)}{destination}."
-    elif personalized and company_is_specific(company):
-        opening = f"Me interesa la posibilidad de formar parte del equipo de {clean(company)}."
-    return (
-        "Estimado equipo de selección:\n\n"
-        f"{opening} Soy Ingeniero Civil Químico de la Universidad Técnica Federico "
-        "Santa María, con experiencia en procesos industriales, análisis de datos "
-        "y mejora continua.\n\n"
-        "Durante mis prácticas y mi proyecto de título he trabajado tanto en planta "
-        "como en entornos corporativos de minería, energía, manufactura y "
-        "abastecimiento. En ese recorrido he desarrollado reportes, indicadores y "
-        "modelos predictivos, combinando herramientas de análisis con la comprensión "
-        "de los procesos y sus condiciones de operación.\n\n"
-        "Busco un espacio donde pueda asumir responsabilidades, aprender de personas "
-        "con experiencia y contribuir con un trabajo serio, ordenado y colaborativo. "
-        "Me motiva participar en mejoras que tengan una aplicación concreta en la "
-        "operación y trabajar junto a quienes conocen de cerca sus desafíos.\n\n"
-        "Gracias por considerar mi postulación. Quedo disponible para conversar "
-        "en una entrevista sobre mi experiencia y cómo podría aportar a su equipo.\n\n"
-        "Atentamente,"
-    )
-
-
-def generate_letter(text: str, job: str, company: str, created_at: datetime) -> bytes:
-    text, job, company = map(validate_text, (text, job, company))
-    if not text:
-        raise ValueError("Completa la carta o desactiva su inclusión en la carpeta.")
-    styles = pdf_styles()
-    story = []
-    header(story, styles)
-    story.append(Spacer(1, 12))
-    story.append(Paragraph(f'Santiago de Chile, {created_at:%d/%m/%Y}', styles["date"]))
-    if company_is_specific(company):
-        story.append(Paragraph(escape(company), styles["company"]))
-    if job and company_is_specific(company):
-        story.append(Paragraph("Postulación: " + escape(job), styles["company"]))
-    elif not company_is_specific(company):
-        story.append(Paragraph("Carta de presentación", styles["company"]))
-    story.append(Spacer(1, 14))
-    for paragraph in blocks(text):
-        story.append(Paragraph(escape(paragraph).replace("\n", "<br/>"), styles["letter"]))
-    story.extend([Spacer(1, 10), Paragraph(escape(PERSONA["nombre"]), styles["company"])])
-    return build_document(story, "Carta de presentación | Enrique Brun Urrutia")
-
-
-def slug(value: str, fallback: str = "", limit: int = 48) -> str:
-    value = unicodedata.normalize("NFKD", clean(value)).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-zA-Z0-9]+", "_", value).strip("_")[:limit].rstrip("_").upper() or fallback
-
-
-def folder_name(job: str, company: str, created_at: datetime, token: str) -> str:
-    parts = ["POSTULACION", slug(job, "CARGO_NO_ESPECIFICADO")]
-    if clean(company):
-        parts.append(slug(company, "EMPRESA"))
-    parts.extend([created_at.strftime("%Y-%m-%d_%H-%M-%S"), "CL", slug(token, "VERSION", 8)])
-    return "_".join(parts)
-
-
-def package_application(profile: str, job: str, company: str,
-                        include_letter: bool, letter_text: str) -> dict:
-    """El ZIP entrega una carpeta real al extraerlo, sin depender del disco cloud."""
-    created_at = datetime.now(TIMEZONE)
-    folder = folder_name(job, company, created_at, uuid4().hex[:6])
-    cv_pdf = generate_cv(profile)
-    letter_pdf = generate_letter(letter_text, job, company, created_at) if include_letter else None
-    output = BytesIO()
-    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr(folder + "/", b"")
-        archive.writestr(folder + "/" + PDF_FILENAME, cv_pdf)
-        if letter_pdf:
-            archive.writestr(folder + "/" + LETTER_FILENAME, letter_pdf)
-    return {
-        "folder": folder, "zip": output.getvalue(), "pdf": cv_pdf,
-        "letter_pdf": letter_pdf, "created_at": created_at.isoformat(),
-    }
-
-
-def fingerprint(profile: str, job: str, company: str, include_letter: bool, letter_text: str) -> str:
-    payload = [DESIGN_VERSION, profile, job, company, include_letter, letter_text if include_letter else ""]
-    return hashlib.sha256(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()
-
-
-def preview_header_html() -> str:
-    e = html.escape
-    result = '<article class="cv-paper" lang="es"><div class="masthead"><div class="identity">'
-    result += f'<div class="name">{e(PERSONA["nombre"])}</div>'
-    result += f'<div class="title">{e(PERSONA["titulo"])} · UTFSM</div>'
-    result += f'<div class="specialty">{e(PERSONA["especialidad"])}</div></div>'
-    phone_url = "tel:" + re.sub(r"[^+0-9]", "", PERSONA["telefono"])
-    result += f'<div class="contact">{e(PERSONA["ciudad"])}<br>'
-    result += f'<a href="{phone_url}">{e(PERSONA["telefono"])}</a><br>'
-    result += f'<a href="mailto:{e(PERSONA["correo"])}">{e(PERSONA["correo"])}</a><br>'
-    result += f'<a class="linkedin" href="https://{e(PERSONA["linkedin"])}" target="_blank" rel="noopener noreferrer">LinkedIn / Enrique Brun</a>'
-    result += '</div></div><hr>'
-    return result
-
-
-def preview_html(profile: str) -> str:
-    e = html.escape
-    result = preview_header_html() + "<h2>Perfil profesional</h2>"
-    for paragraph in blocks(profile):
-        result += "<p>" + e(paragraph).replace("\n", "<br>") + "</p>"
-    result += "<h2>Experiencia profesional</h2>"
-    for item in EXPERIENCIAS:
-        result += f'<h3>{e(item["empresa"])}</h3><div>{e(item["cargo"])}</div>'
-        result += f'<div class="meta"><span>{e(item["lugar"])}</span><span>{e(item["fechas"])}</span></div><ul>'
-        result += "".join(f"<li>{e(line)}</li>" for line in item["logros"]) + "</ul>"
-    result += f'<h2>Educación</h2><h3>{e(EDUCACION[0])}</h3><p>{e(EDUCACION[1])}</p>'
-    result += '<h2>Competencias técnicas e idiomas</h2><div class="small">'
-    for title, description in COMPETENCIAS:
-        result += f"<p><strong>{e(title)}:</strong> {e(description)}</p>"
-    result += f"<h2>Habilidades profesionales</h2><p>{e(HABILIDADES)}</p><h2>Certificaciones</h2>"
-    result += "".join(f"<p>{e(line)}</p>" for line in CERTIFICACIONES)
-    result += "<h2>Docencia y actividades</h2>"
-    for title, description in DOCENCIA:
-        result += f"<p><strong>{e(title)}</strong><br>{e(description)}</p>"
-    result += f"<p><strong>Actividades:</strong> {e(ACTIVIDADES)}</p>"
-    return result + "</div></article>"
-
-
-def letter_preview_html(text: str, job: str, company: str) -> str:
-    e = html.escape
-    result = preview_header_html()
-    result += f'<p style="text-align:right;margin:20px 0">Santiago de Chile, {datetime.now(TIMEZONE):%d/%m/%Y}</p>'
-    if company_is_specific(company):
-        result += f'<p><strong>{e(clean(company))}</strong></p>'
-        if clean(job):
-            result += f'<p><strong>Postulación: {e(clean(job))}</strong></p>'
+        story.append(Paragraph(escape(paragraph).replace("\n","<br/>"),styles["summary"]))
+    story.append(SectionHeading("Experiencia profesional",compact=executive))
+    if executive:
+        for i in range(len(EXPERIENCIAS)):
+            story.append(KeepTogether(entry_executive(i,styles)))
+            story.append(Spacer(1,4.5))
+        story.append(SectionHeading("Formación académica",compact=True))
+        story.append(Paragraph(f'<b>{escape(EDUCACION[0])}</b>  |  {escape(EDUCACION[1])}',styles["skill"]))
+        story.append(SectionHeading("Competencias técnicas",compact=True))
+        story.extend([
+            small_paragraph("Python (pandas, scikit-learn), SQL, Power BI (DAX, Power Query), Excel avanzado y Power Automate.",styles,"Datos y automatización"),
+            small_paragraph("Aspen Plus, Aspen HYSYS, AVEVA PI, JKSimMet, IES; interpretación PFD y P&ID.",styles,"Ingeniería de procesos"),
+            small_paragraph("SAP ERP, SAP Ariba, Azure, Microsoft Fabric; Lean y Six Sigma.",styles,"Sistemas y gestión"),
+            small_paragraph("Inglés C1 Advanced, certificado EF SET (07/2025).",styles,"Idioma"),
+        ])
+        story.append(SectionHeading("Certificaciones y docencia",compact=True))
+        story.append(small_paragraph("JKSimMet (University of Queensland, 2025) · IES (Orica, 2025) · Power BI y Excel (SERGROUP, 2025).",styles))
+        story.append(small_paragraph("Ayudante y coordinador UTFSM (2021-2025) · Docente CPECH · Vicepresidente de Marketing, AIESEC Chile.",styles))
     else:
-        result += '<h2>Carta de presentación</h2>'
-    for paragraph in blocks(text):
-        result += '<p style="margin-bottom:16px">' + e(paragraph).replace("\n", "<br>") + '</p>'
-    result += f'<p><strong>{e(PERSONA["nombre"])}</strong></p>'
-    return result + '</article>'
+        for item in EXPERIENCIAS[:4]:
+            story.append(KeepTogether(entry_full(item,styles)))
+            story.append(Spacer(1,11))
+        story.append(PageBreak())
+        story.append(Spacer(1,4))
+        story.append(SectionHeading("Experiencia profesional · continuación"))
+        for item in EXPERIENCIAS[4:]:
+            story.append(KeepTogether(entry_full(item,styles)))
+            story.append(Spacer(1,8))
+        story.append(SectionHeading("Formación académica"))
+        story.append(Paragraph(escape(EDUCACION[0]),styles["company"]))
+        story.append(Paragraph(escape(EDUCACION[1]),styles["small"]))
+        story.append(SectionHeading("Competencias técnicas e idiomas"))
+        for label,description in COMPETENCIAS:
+            story.append(small_paragraph(description,styles,label+":"))
+        story.append(SectionHeading("Certificaciones"))
+        for certification in CERTIFICACIONES:
+            story.append(small_paragraph(certification,styles))
+        story.append(SectionHeading("Docencia y liderazgo"))
+        for title,description in DOCENCIA:
+            story.append(KeepTogether([Paragraph(escape(title),styles["company"]),
+                                       Paragraph(escape(description),styles["small"])]))
+        story.append(small_paragraph(ACTIVIDADES,styles,"Actividades:"))
+    return build_document(story,PERSONA["nombre"]+" | "+mode+" | CV")
 
 
-def reset_generic_letter() -> None:
-    text = letter_template()
-    st.session_state["cover_letter"] = text
-    st.session_state["_managed_letter_text"] = text
-    st.session_state["_letter_mode"] = "generic"
-
-
-def restore_previous_letter() -> None:
-    st.session_state["cover_letter"] = st.session_state.get("_previous_letter_draft", letter_template())
-    st.session_state["_letter_mode"] = "custom"
-
-
-def reset_profile() -> None:
-    st.session_state["professional_profile"] = PERFIL_BASE
-
-
-def refresh_letter() -> None:
-    text = letter_template(st.session_state.get("target_job", ""),
-                           st.session_state.get("target_company", ""), personalized=True)
-    st.session_state["cover_letter"] = text
-    st.session_state["_managed_letter_text"] = text
-    st.session_state["_letter_mode"] = "personalized"
+def preview_html(profile: str, mode="Ejecutivo") -> str:
+    e=html.escape
+    phone=re.sub(r"[^+0-9]","",PERSONA["telefono"])
+    parts=['<article class="cv-paper" lang="es">','<div class="eyebrow">Ingeniería / Procesos / Datos</div>',
+           f'<div class="name">{e(PERSONA["nombre"])}</div>',
+           f'<div class="subtitle">{e(PERSONA["titulo"])} &nbsp;|&nbsp; Ingeniería de Procesos y Analítica Industrial</div>',
+           '<div class="contact">',f'{e(PERSONA["ciudad"])} &nbsp; · &nbsp; {e(PERSONA["telefono"])} &nbsp; · &nbsp; {e(PERSONA["correo"])}<br>',
+           f'{e(PERSONA["linkedin"].rstrip("/"))}</div>','<div class="rule"></div>',
+           '<h2>Perfil profesional</h2>']
+    for par in blocks(profile):
+        parts.append('<p>'+e(par).replace("\n","<br>")+'</p>')
+    parts.append('<h2>Experiencia profesional</h2>')
+    for i,item in enumerate(EXPERIENCIAS):
+        if mode=="Ejecutivo":
+            company,role,ach=EXPERIENCIA_EJECUTIVA[i]
+        else:
+            company,role,ach=item["empresa"],item["cargo"],item["logros"]
+        dates=item["fechas"].split(" (")[0]
+        parts.extend(['<div class="entry">',f'<div class="row-head"><span class="company">{e(company)}</span><span class="date">{e(dates)}</span></div>',
+                      f'<div class="role">{e(role)}</div>'])
+        if mode=="Completo":
+            parts.append(f'<div class="place">{e(item["lugar"])}</div>')
+        parts.extend(['<ul>'+''.join(f'<li>{e(x)}</li>' for x in ach)+'</ul>','</div>'])
+    parts.extend(['<h2>Formación académica</h2>',f'<p><strong>{e(EDUCACION[0])}</strong> · {e(EDUCACION[1])}</p>'])
+    if mode == "Ejecutivo":
+        parts.append('<h2>Competencias técnicas</h2>')
+        skills = [
+            ("Datos y automatización", "Python (pandas, scikit-learn), SQL, Power BI (DAX, Power Query), Excel avanzado y Power Automate."),
+            ("Ingeniería de procesos", "Aspen Plus, Aspen HYSYS, AVEVA PI, JKSimMet, IES; interpretación PFD y P&ID."),
+            ("Sistemas y gestión", "SAP ERP, SAP Ariba, Azure, Microsoft Fabric; Lean y Six Sigma."),
+            ("Idioma", "Inglés C1 Advanced, certificado EF SET (07/2025)."),
+        ]
+        for label,desc in skills:
+            parts.append(f'<div class="skill-row"><strong>{e(label)}:</strong> {e(desc)}</div>')
+        parts.extend([
+            '<h2>Certificaciones y docencia</h2>',
+            '<div class="skill-row">JKSimMet (University of Queensland, 2025) · IES (Orica, 2025) · Power BI y Excel (SERGROUP, 2025).</div>',
+            '<div class="skill-row">Ayudante y coordinador UTFSM (2021-2025) · Docente CPECH · Vicepresidente de Marketing, AIESEC Chile.</div>',
+        ])
+    else:
+        parts.append('<h2>Competencias técnicas e idiomas</h2>')
+        for label,desc in COMPETENCIAS:
+            parts.append(f'<div class="skill-row"><strong>{e(label)}:</strong> {e(desc)}</div>')
+        parts.append('<h2>Certificaciones</h2>')
+        parts.extend(f'<div class="skill-row">{e(c)}</div>' for c in CERTIFICACIONES)
+        parts.append('<h2>Docencia y liderazgo</h2>')
+        for title,desc in DOCENCIA:
+            parts.append(f'<p class="small"><strong>{e(title)}</strong><br>{e(desc)}</p>')
+        parts.append(f'<p class="small">{e(ACTIVIDADES)}</p>')
+    parts.append('</article>')
+    return ''.join(parts)
 
 
 def main() -> None:
-    st.set_page_config(page_title="Enrique Brun | Postulaciones", layout="wide")
+    st.set_page_config(page_title="Enrique Brun | Currículum",layout="wide")
     st.html(CSS)
-    st.session_state.setdefault("target_job", DEFAULT_JOB)
-    st.session_state.setdefault("target_company", DEFAULT_COMPANY)
-    st.session_state.setdefault("professional_profile", PERFIL_BASE)
-    # Al actualizar, carga el perfil base de esta edición una sola vez.
-    # Conserva el texto anterior como borrador de sesión.
-    if st.session_state.get("_industrial_profile_initialized") != PROFILE_VERSION:
-        st.session_state["_previous_profile_draft"] = st.session_state.get("professional_profile", "")
-        st.session_state["professional_profile"] = PERFIL_BASE
-        st.session_state["_industrial_profile_initialized"] = PROFILE_VERSION
-    if st.session_state.get("_letter_template_version") != LETTER_VERSION:
-        st.session_state["_previous_letter_draft"] = st.session_state.get("cover_letter", "")
-        reset_generic_letter()
-        st.session_state["_letter_template_version"] = LETTER_VERSION
-    st.title("Enrique Brun · Postulaciones")
-    st.caption("CV personal · Ingeniería Civil Química · Universidad Técnica Federico Santa María")
-
-    left, right = st.columns(2)
-    with left:
-        job = st.text_input("Cargo al que postulas", key="target_job", max_chars=160,
-                            placeholder="Ej.: Ingeniero de Procesos")
-    with right:
-        company = st.text_input("Empresa", key="target_company", max_chars=120,
-                                placeholder="Ej.: Empresa Minera")
-    st.caption("Cargo y empresa identifican la carpeta de esta postulación. Fecha y hora se agregan al confirmar, con hora de Chile.")
-
-    cv_tab, letter_tab = st.tabs(["CV", "Carta de presentación"])
-    with cv_tab:
-        editor, preview = st.columns((1, 1.12), gap="large")
-        with editor:
-            st.subheader("Perfil profesional")
-            st.write("Adapta el perfil a la vacante. Las seis experiencias ya están resumidas con foco en minería, energía y procesos industriales.")
-            profile = st.text_area("Texto del perfil", key="professional_profile", height=390,
-                                   max_chars=3500, help="Separa los párrafos con una línea en blanco.")
-            st.caption(f"{len(clean(profile).split())} palabras · Edita solo lo necesario para la postulación.")
-            st.button("Restaurar perfil base", key="reset_profile", on_click=reset_profile)
-            st.caption("Diseño completo con dos aportes por experiencia, ubicaciones detalladas y todas tus secciones de formación y competencias.")
-            st.caption("Si escribes un perfil más extenso, el documento puede sumar páginas para conservar todo el contenido.")
-        with preview:
-            st.subheader("Vista previa del CV")
-            st.caption("La paginación definitiva se ve en el PDF descargado.")
-            with st.container(height=720, border=True):
-                st.html(preview_html(profile))
-
-    # Si la plantilla personalizada no fue editada manualmente, actualiza su
-    # primera frase al cambiar cargo o empresa. Los textos propios se conservan.
-    if (st.session_state.get("_letter_mode") == "personalized"
-            and st.session_state["cover_letter"] == st.session_state.get("_managed_letter_text")):
-        updated = letter_template(job, company, personalized=True)
-        st.session_state["cover_letter"] = updated
-        st.session_state["_managed_letter_text"] = updated
-
-    with letter_tab:
-        editor, preview = st.columns((1, 1.12), gap="large")
-        with editor:
-            st.subheader("Carta de presentación")
-            st.write("Una carta reutilizable, basada en tu experiencia y lista para editar con tus propias palabras.")
-            include_letter = st.checkbox("Incluir carta en la carpeta de postulación", key="include_letter")
-            st.caption("Los botones de plantilla reemplazan el texto actual.")
-            st.button("Usar carta genérica", key="generic_letter", on_click=reset_generic_letter)
-            st.button("Personalizar con cargo y empresa", key="refresh_letter", on_click=refresh_letter)
-            letter_text = st.text_area("Texto de la carta", key="cover_letter", height=470, max_chars=12000,
-                                      help="El nombre y los datos de contacto se agregan automáticamente al PDF.")
-            st.caption("La carta genérica no menciona una empresa concreta. Si personalizas la plantilla, revisa los datos antes de descargar.")
-            if st.session_state.get("_previous_letter_draft"):
-                with st.expander("Recuperar el texto de mi carta anterior"):
-                    st.text(st.session_state["_previous_letter_draft"])
-                    st.button("Recuperar carta anterior", key="previous_letter", on_click=restore_previous_letter)
-        with preview:
-            st.subheader("Vista previa de la carta")
-            with st.container(height=680, border=True):
-                st.html(letter_preview_html(letter_text, job, company))
-            letter_hash = hashlib.sha256(json.dumps([LETTER_VERSION, letter_text, job, company], ensure_ascii=False).encode()).hexdigest()
-            saved_letter = st.session_state.get("_standalone_letter")
-            if saved_letter and saved_letter["hash"] != letter_hash:
-                st.session_state.pop("_standalone_letter", None)
-                saved_letter = None
-            if st.button("Confirmar y generar PDF de la carta", key="generate_letter", type="primary", width="stretch"):
-                try:
-                    pdf = generate_letter(letter_text, job, company, datetime.now(TIMEZONE))
-                except ValueError as exc:
-                    st.error(str(exc))
-                else:
-                    saved_letter = {"hash": letter_hash, "pdf": pdf}
-                    st.session_state["_standalone_letter"] = saved_letter
-            if saved_letter:
-                st.download_button("Descargar carta en PDF", saved_letter["pdf"], LETTER_FILENAME,
-                                   mime="application/pdf", key="standalone_letter_download", width="stretch")
-
-    st.divider()
-    current = fingerprint(profile, job, company, include_letter, letter_text)
-    package = st.session_state.get("_application_package")
-    if package and package["fingerprint"] != current:
-        st.session_state.pop("_application_package", None)
-        package = None
-        st.info("La postulación cambió. Confirma nuevamente para generar la versión actualizada.")
-
-    if st.button("Confirmar y generar carpeta de postulación", key="generate_application",
-                 type="primary", width="stretch"):
-        if not clean(profile):
-            st.error("Completa el perfil profesional.")
-        elif not clean(job):
-            st.error("Indica el cargo para identificar esta postulación.")
-        else:
+    st.session_state.setdefault("professional_profile",PERFIL_BASE)
+    st.session_state.setdefault("cv_mode","Ejecutivo")
+    st.title("Currículum profesional")
+    st.caption("Enrique Brun Urrutia · Ingeniería Civil Química")
+    principal,detalles=st.tabs(["Principal","Detalles"])
+    with principal:
+        profile=st.session_state["professional_profile"]
+        mode=st.session_state["cv_mode"]
+        st.caption(f"Versión {mode.lower()} · Diseño editorial azul marino")
+        if clean(profile):
             try:
-                with st.spinner("Preparando tu postulación..."):
-                    package = package_application(profile, job, company, include_letter, letter_text)
-                package["fingerprint"] = current
-                st.session_state["_application_package"] = package
-            except ValueError as exc:
-                st.error(str(exc))
-
-    if package:
-        st.success("Tu postulación está lista.")
-        st.write("**Carpeta:**")
-        st.code(package["folder"], language=None)
-        st.caption("Descarga y descomprime el ZIP: contiene esa carpeta con el CV en su interior.")
-        st.download_button("Descargar carpeta de postulación (.zip)", data=package["zip"],
-                           file_name=package["folder"] + ".zip", mime="application/zip",
-                           key="download_application", type="primary", width="stretch")
-        st.download_button("Descargar solamente el CV (.pdf)", data=package["pdf"],
-                           file_name=PDF_FILENAME, mime="application/pdf", key="download_cv")
-        if package["letter_pdf"]:
-            st.download_button("Descargar solamente la carta (.pdf)", data=package["letter_pdf"],
-                               file_name=LETTER_FILENAME, mime="application/pdf", key="download_letter")
-        st.caption("Archivo del CV: " + PDF_FILENAME)
+                pdf=generate_cv(profile,mode)
+            except Exception as exc:
+                st.error(f"No se pudo generar el documento: {exc}")
+            else:
+                st.download_button("Generar PDF",data=pdf,
+                                   file_name=PDF_FILENAME_EXEC if mode=="Ejecutivo" else PDF_FILENAME_FULL,
+                                   mime="application/pdf",type="primary",width="stretch",key="generate_pdf")
+        else:
+            st.info("Completa el perfil profesional en Detalles.")
+        with st.container(height=720,border=False):
+            st.html(preview_html(profile,mode))
+    with detalles:
+        st.selectbox("Extensión del CV",options=["Ejecutivo","Completo"],key="cv_mode",
+                     help="Ejecutivo: síntesis para postulación. Completo: todas las experiencias y certificaciones.")
+        st.text_area("Perfil profesional",key="professional_profile",height=215,max_chars=3500,
+                     help="El texto se incorpora al PDF. Prefiere 3-4 líneas para la versión ejecutiva.")
+        with st.expander("Experiencia incluida"):
+            for item in EXPERIENCIAS:
+                st.markdown(f'**{item["empresa"]}**  \n{item["cargo"]} · {item["fechas"]}')
+        with st.expander("Formación y competencias"):
+            st.markdown(f'**{EDUCACION[0]}**  \n{EDUCACION[1]}')
+            for label,desc in COMPETENCIAS:
+                st.markdown(f'**{label}:** {desc}')
 
 
 # Fuentes derivadas de Liberation Sans, con subconjunto de caracteres y
